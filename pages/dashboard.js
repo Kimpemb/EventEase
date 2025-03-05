@@ -1,3 +1,4 @@
+// pages/dashboard.js
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "../firebase/firebaseConfig";
@@ -6,6 +7,7 @@ import Link from "next/link";
 const DashboardPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -13,17 +15,21 @@ const DashboardPage = () => {
       if (user) {
         setUser(user);
       } else {
-        router.push("/signin");
+        router.push("/signin"); // Redirect to sign-in if user is not authenticated
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Cleanup subscription
   }, [router]);
 
   const handleSignOut = async () => {
-    await auth.signOut();
-    router.push("/signin");
+    try {
+      await auth.signOut();
+      router.push("/signin"); // Redirect to sign-in after signing out
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   if (loading) {
@@ -40,18 +46,20 @@ const DashboardPage = () => {
         <h1 className="text-4xl font-semibold text-gray-800 mb-4">
           Welcome to your Dashboard!
         </h1>
-        <p className="text-xl text-gray-600 mb-6">Hello, {user.email}</p>
-        
+        <p className="text-xl text-gray-600 mb-6">
+          Hello, {user.displayName || user.email}
+        </p>
+
         {/* View Events Button */}
         <Link href="/events">
-          <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+          <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300">
             View All Events
           </button>
         </Link>
 
         {/* Create Event Button */}
         <Link href="/create-event">
-          <button className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+          <button className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300">
             Create Event
           </button>
         </Link>
@@ -59,7 +67,7 @@ const DashboardPage = () => {
         {/* Sign Out Button */}
         <button
           onClick={handleSignOut}
-          className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+          className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
         >
           Sign Out
         </button>

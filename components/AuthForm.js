@@ -6,31 +6,37 @@ import Link from "next/link"; // Import Next.js Link for navigation
 import { useRouter } from "next/router"; // Import useRouter for redirection
 
 const AuthForm = ({ isSignUp = true }) => {
+  const [username, setUsername] = useState(""); // State for username
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [loading, setLoading] = useState(false); // Loading state
   const router = useRouter(); // Initialize useRouter for redirection
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
+    setLoading(true);
 
     try {
-      const user = isSignUp
-        ? await signUp(email, password)
-        : await login(email, password);
-
-      setSuccessMessage(isSignUp ? "Sign-up successful!" : "Sign-in successful!");
-      console.log("User:", user);
-
-      // Redirect to dashboard on successful sign-in
-      if (!isSignUp) {
-        router.push("/dashboard"); // Redirect to dashboard
+      if (isSignUp) {
+        // Sign up with username, email, and password
+        const user = await signUp(email, password, username); // Pass username to signUp
+        setSuccessMessage("Sign-up successful!");
+        console.log("User:", user);
+      } else {
+        // Log in with email and password
+        const user = await login(email, password);
+        setSuccessMessage("Sign-in successful!");
+        console.log("User:", user);
+        router.push("/dashboard"); // Redirect to dashboard on successful sign-in
       }
     } catch (error) {
       setErrorMessage(error.message);
+    } finally {
+      setLoading(false); // Reset loading state
     }
   };
 
@@ -42,8 +48,18 @@ const AuthForm = ({ isSignUp = true }) => {
       {errorMessage && <p className={styles.error}>{errorMessage}</p>}
       {successMessage && <p className={styles.success}>{successMessage}</p>}
 
-      {/* Form for email and password */}
+      {/* Form for username, email, and password */}
       <form onSubmit={handleFormSubmit} className={styles.form}>
+        {isSignUp && (
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className={styles.input}
+            required
+          />
+        )}
         <input
           type="email"
           placeholder="Email"
@@ -60,8 +76,18 @@ const AuthForm = ({ isSignUp = true }) => {
           className={styles.input}
           required
         />
-        <button type="submit" className={styles.button}>
-          {isSignUp ? "Sign Up" : "Sign In"}
+        <button
+          type="submit"
+          className={styles.button}
+          disabled={loading} // Disable button while loading
+        >
+          {loading
+            ? isSignUp
+              ? "Signing Up..."
+              : "Signing In..."
+            : isSignUp
+            ? "Sign Up"
+            : "Sign In"}
         </button>
       </form>
 

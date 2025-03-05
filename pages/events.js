@@ -42,6 +42,9 @@ const EventsPage = () => {
                   Date: {new Date(event.date).toLocaleDateString()} | Time: {event.time}
                 </p>
                 <p className="text-gray-500">Location: {event.location}</p>
+                <p className="text-gray-500 font-semibold">
+                  Organizer: {event.organizer || "Unknown"}
+                </p>
               </div>
             ))
           )}

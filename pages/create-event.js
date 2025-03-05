@@ -1,4 +1,3 @@
-// pages/create-event.js
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "../firebase/firebaseConfig"; // Firebase config
@@ -37,7 +36,7 @@ const CreateEventPage = () => {
     }
 
     try {
-      // Create the event in Firestore
+      // Create the event in Firestore with the organizer's name
       await createEvent({
         title,
         description,
@@ -45,6 +44,7 @@ const CreateEventPage = () => {
         time,
         location,
         userId: user.uid, // Link the event to the logged-in user
+        organizer: user.displayName || "Unknown Organizer", // Include organizer name
       });
       setSuccess("Event created successfully!");
 
