@@ -9,6 +9,7 @@ const CreateEventPage = () => {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
+  const [category, setCategory] = useState("General"); // New category state
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false); // Loading state
@@ -43,6 +44,7 @@ const CreateEventPage = () => {
         date,
         time,
         location,
+        category, // Include category
         userId: user.uid, // Link the event to the logged-in user
         organizer: user.displayName || "Unknown Organizer", // Include organizer name
       });
@@ -54,6 +56,7 @@ const CreateEventPage = () => {
       setDate("");
       setTime("");
       setLocation("");
+      setCategory("General");
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
@@ -113,6 +116,17 @@ const CreateEventPage = () => {
           className="p-3 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
         />
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="p-3 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="General">General</option>
+          <option value="Music">Music</option>
+          <option value="Sports">Sports</option>
+          <option value="Education">Education</option>
+          <option value="Entertainment">Entertainment</option>
+        </select>
         <button
           type="submit"
           className="bg-blue-600 text-white p-3 rounded w-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400"

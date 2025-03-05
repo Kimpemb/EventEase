@@ -14,6 +14,7 @@ export const createEvent = async (eventData) => {
       ...eventData,
       userId: user.uid, // Store user ID
       username: user.displayName || "Anonymous", // Store username (fallback to "Anonymous")
+      category: eventData.category || "Uncategorized", // Store category with default fallback
       createdAt: serverTimestamp(), // Add server-side timestamp
     });
 
