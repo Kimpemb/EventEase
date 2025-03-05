@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getEvents } from "../firebase/firebaseEvents";
+import { getEvents, joinEvent } from "../firebase/firebaseEvents";
+import { auth } from "../firebase/firebaseConfig";
 
 const categories = [
   "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
@@ -26,6 +27,21 @@ const EventsPage = () => {
 
     fetchEvents();
   }, []);
+
+  const handleJoinEvent = async (eventId) => {
+    try {
+      await joinEvent(eventId);
+      alert("You have successfully joined the event!");
+      
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId ? { ...event, participants: [...event.participants, auth.currentUser.uid] } : event
+        )
+      );
+    } catch (err) {
+      alert(err.message || "Failed to join event.");
+    }
+  };
 
   const filteredEvents = events.filter(event =>
     (selectedCategory ? event.category === selectedCategory : true) &&
@@ -79,6 +95,13 @@ const EventsPage = () => {
                 <p className="text-gray-500 font-semibold">
                   Organizer: {event.organizer || "Unknown"}
                 </p>
+                <button
+                  onClick={() => handleJoinEvent(event.id)}
+                  disabled={event.participants?.includes(auth.currentUser?.uid)}
+                  className={`mt-4 px-4 py-2 text-white rounded ${event.participants?.includes(auth.currentUser?.uid) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
+                >
+                  {event.participants?.includes(auth.currentUser?.uid) ? "Joined" : "Join Event"}
+                </button>
               </div>
             ))
           )}

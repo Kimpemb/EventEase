@@ -1,4 +1,4 @@
-import SignIn from "../components/SignIn"; // Ensure the path matches the file name and case
+import SignIn from "../pages/signin"; // This imports the sign-in page from the 'pages' directory
 
 export default function Home() {
   return (
