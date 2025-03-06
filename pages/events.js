@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { getEvents, joinEvent } from "../firebase/firebaseEvents";
+import { getEvents, joinEvent, getEventParticipants } from "../firebase/firebaseEvents";
 import { auth } from "../firebase/firebaseConfig";
+import styles from '../styles/Events.module.css';
 
-const categories = [
-  "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
-];
+const categories = ["Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"];
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
@@ -17,25 +16,45 @@ const EventsPage = () => {
     const fetchEvents = async () => {
       try {
         const eventsList = await getEvents();
-        setEvents(eventsList);
+        const updatedEvents = await Promise.all(eventsList.map(async (event) => {
+          if (auth.currentUser?.uid === event.userId) {
+            try {
+              const participantEmails = await getEventParticipants(event.id);
+              return { ...event, participantEmails };
+            } catch {
+              return { ...event, participantEmails: [] };
+            }
+          }
+          return { ...event, participantEmails: null };
+        }));
+        setEvents(updatedEvents);
       } catch (err) {
+        console.error("Error fetching events:", err);
         setError("Failed to load events.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchEvents();
   }, []);
 
-  const handleJoinEvent = async (eventId) => {
+  const handleJoinEvent = async (event) => {
+    const eventStartTime = new Date(`${event.date} ${event.time}`);
+    const now = new Date();
+
+    if (now >= eventStartTime) {
+      alert("This event has already started. You cannot join.");
+      return;
+    }
+
     try {
-      await joinEvent(eventId);
+      await joinEvent(event.id);
       alert("You have successfully joined the event!");
-      
       setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === eventId ? { ...event, participants: [...event.participants, auth.currentUser.uid] } : event
+        prevEvents.map((e) =>
+          e.id === event.id
+            ? { ...e, participants: [...e.participants, auth.currentUser.uid] }
+            : e
         )
       );
     } catch (err) {
@@ -45,26 +64,16 @@ const EventsPage = () => {
 
   const filteredEvents = events.filter(event =>
     (selectedCategory ? event.category === selectedCategory : true) &&
-    (search ? event.title.toLowerCase().includes(search.toLowerCase()) : true)
+    (search ? event.title?.toLowerCase().includes(search.toLowerCase()) : true)
   );
 
   return (
-    <div className="flex flex-col items-center p-8 bg-gray-50 min-h-screen">
-      <h1 className="text-4xl font-bold text-gray-800 mb-6">Events</h1>
-      
-      <div className="flex space-x-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search events..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+    <div className={styles.container}>
+      <h1 className={styles.title}>Events</h1>
+
+      <div className={styles.filters}>
+        <input type="text" placeholder="Search events..." value={search} onChange={(e) => setSearch(e.target.value)} className={styles.input} />
+        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className={styles.select}>
           <option value="">All Categories</option>
           {categories.map((category) => (
             <option key={category} value={category}>{category}</option>
@@ -73,37 +82,52 @@ const EventsPage = () => {
       </div>
 
       {loading ? (
-        <p className="text-blue-500">Loading events...</p>
+        <p className={styles.loading}>Loading events...</p>
       ) : error ? (
-        <p className="text-red-500">{error}</p>
+        <p className={styles.error}>{error}</p>
       ) : (
-        <div className="space-y-6 w-full max-w-4xl">
+        <div className={styles.eventsContainer}>
           {filteredEvents.length === 0 ? (
-            <p className="text-gray-500">No events available.</p>
+            <p className={styles.noEvents}>No events available.</p>
           ) : (
-            filteredEvents.map((event) => (
-              <div key={event.id} className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-semibold text-gray-800">{event.title}</h2>
-                <p className="text-gray-600">{event.description}</p>
-                <p className="text-gray-500">
-                  Date: {new Date(event.date).toLocaleDateString()} | Time: {event.time}
-                </p>
-                <p className="text-gray-500">Location: {event.location}</p>
-                <p className="text-gray-500 font-semibold">
-                  Category: {event.category || "Uncategorized"}
-                </p>
-                <p className="text-gray-500 font-semibold">
-                  Organizer: {event.organizer || "Unknown"}
-                </p>
-                <button
-                  onClick={() => handleJoinEvent(event.id)}
-                  disabled={event.participants?.includes(auth.currentUser?.uid)}
-                  className={`mt-4 px-4 py-2 text-white rounded ${event.participants?.includes(auth.currentUser?.uid) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
-                >
-                  {event.participants?.includes(auth.currentUser?.uid) ? "Joined" : "Join Event"}
-                </button>
-              </div>
-            ))
+            filteredEvents.map((event) => {
+              const eventStartTime = new Date(`${event.date} ${event.time}`);
+              const now = new Date();
+              const hasStarted = now >= eventStartTime;
+              const alreadyJoined = event.participants?.includes(auth.currentUser?.uid);
+              const isOrganizer = auth.currentUser?.uid === event.userId;
+
+              return (
+                <div key={event.id} className={styles.eventCard}>
+                  <h2 className={styles.eventTitle}>{event.title}</h2>
+                  <p className={styles.eventDetails}>{event.description}</p>
+                  <p className={styles.eventDetails}>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.time}</p>
+                  <p className={styles.eventDetails}>Location: {event.location}</p>
+                  <p className={styles.category}>Category: {event.category || "Uncategorized"}</p>
+                  <p className={styles.organizer}>Organizer: {event.organizer || "Unknown"}</p>
+                  <button onClick={() => handleJoinEvent(event)} disabled={alreadyJoined || hasStarted} className={styles.joinButton}>
+                    {alreadyJoined ? "Joined" : hasStarted ? "Event Started" : "Join Event"}
+                  </button>
+
+                  {isOrganizer && (
+                    <div className={styles.participantsList}>
+                      <h3>Participants:</h3>
+                      {event.participantEmails ? (
+                        <ul>
+                          {event.participantEmails.length > 0 ? (
+                            event.participantEmails.map((email, index) => <li key={index}>{email}</li>)
+                          ) : (
+                            <p>No participants yet.</p>
+                          )}
+                        </ul>
+                      ) : (
+                        <p>Loading participants...</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       )}

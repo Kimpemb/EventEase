@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { auth } from "../firebase/firebaseConfig"; // Firebase config
-import { createEvent } from "../firebase/firebaseEvents"; // Function to handle event creation
+import { auth } from "../firebase/firebaseConfig"; 
+import { createEvent } from "../firebase/firebaseEvents"; 
+import styles from "../styles/createEvent.module.css"; 
 
 const CreateEventPage = () => {
   const [title, setTitle] = useState("");
@@ -9,10 +10,10 @@ const CreateEventPage = () => {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("General"); // New category state
+  const [category, setCategory] = useState("General");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false); // Loading state
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -28,7 +29,6 @@ const CreateEventPage = () => {
       return;
     }
 
-    // Validate the event date and time
     const eventDateTime = new Date(`${date}T${time}`);
     if (eventDateTime <= new Date()) {
       setError("Event date and time must be in the future.");
@@ -37,20 +37,18 @@ const CreateEventPage = () => {
     }
 
     try {
-      // Create the event in Firestore with the organizer's name
       await createEvent({
         title,
         description,
         date,
         time,
         location,
-        category, // Include category
-        userId: user.uid, // Link the event to the logged-in user
-        organizer: user.displayName || "Unknown Organizer", // Include organizer name
+        category,
+        userId: user.uid,
+        organizer: user.displayName || "Unknown Organizer",
       });
       setSuccess("Event created successfully!");
 
-      // Clear the form
       setTitle("");
       setDescription("");
       setDate("");
@@ -58,10 +56,9 @@ const CreateEventPage = () => {
       setLocation("");
       setCategory("General");
 
-      // Redirect to dashboard after a short delay
       setTimeout(() => {
         router.push("/dashboard");
-      }, 1500); // 1.5 seconds delay
+      }, 1500);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -69,72 +66,116 @@ const CreateEventPage = () => {
     }
   };
 
+  const handleCancel = () => {
+    router.push("/dashboard");
+  };
+
   return (
-    <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
-      <h1 className="text-4xl font-bold text-gray-800 mb-6">Create Event</h1>
-
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {success && <p className="text-green-500 mb-4">{success}</p>}
-
-      <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-lg p-6 bg-white rounded-lg shadow-lg">
-        <input
-          type="text"
-          placeholder="Event Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="p-3 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        <textarea
-          placeholder="Event Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="p-3 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        <div className="flex space-x-4">
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="p-3 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="p-3 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+    <div className={styles.pageContainer}>
+      <div className={styles.formPanel}>
+        <div className={styles.formHeader}>
+          <h1 className={styles.formTitle}>Create Event</h1>
+          <button 
+            onClick={handleCancel}
+            className={styles.cancelButton}
+          >
+            Cancel
+          </button>
         </div>
-        <input
-          type="text"
-          placeholder="Location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="p-3 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="p-3 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="General">General</option>
-          <option value="Music">Music</option>
-          <option value="Sports">Sports</option>
-          <option value="Education">Education</option>
-          <option value="Entertainment">Entertainment</option>
-        </select>
-        <button
-          type="submit"
-          className="bg-blue-600 text-white p-3 rounded w-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400"
-          disabled={loading} // Disable button while loading
-        >
-          {loading ? "Creating Event..." : "Create Event"}
-        </button>
-      </form>
+
+        {error && <p className={styles.errorMessage}>{error}</p>}
+        {success && <p className={styles.successMessage}>{success}</p>}
+
+        <form onSubmit={handleSubmit} className={styles.eventForm}>
+          <div className={styles.formGroup}>
+            <label className={styles.inputLabel}>Event Title</label>
+            <input
+              type="text"
+              placeholder="Enter event title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={styles.textInput}
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.inputLabel}>Event Description</label>
+            <textarea
+              placeholder="Describe your event"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={styles.textArea}
+              rows="4"
+              required
+            />
+          </div>
+
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <label className={styles.inputLabel}>Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className={styles.dateInput}
+                required
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.inputLabel}>Time</label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className={styles.timeInput}
+                required
+              />
+            </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.inputLabel}>Location</label>
+            <input
+              type="text"
+              placeholder="Event location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className={styles.textInput}
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.inputLabel}>Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className={styles.selectInput}
+            >
+              <option value="General">General</option>
+              <option value="Music">Music</option>
+              <option value="Sports">Sports</option>
+              <option value="Tech">Tech</option>
+              <option value="Education">Education</option>
+              <option value="Health">Health</option>
+              <option value="Business">Business</option>
+              <option value="Art">Art</option>
+              <option value="Entertainment">Entertainment</option>
+            </select>
+          </div>
+
+          <div className={styles.formActions}>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={loading}
+            >
+              {loading ? "Creating Event..." : "Create Event"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

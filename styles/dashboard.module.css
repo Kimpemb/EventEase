@@ -1,0 +1,164 @@
+/* General Styles */
+.dashboardContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-color: #f8f9fa; /* Light Gray */
+    min-height: 100vh;
+}
+  
+.dashboardPanel {
+    width: 90%;
+    max-width: 800px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12);
+    color: #1a1a1a; /* Dark Gray */
+}
+  
+/* Header */
+.dashboardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+  
+.dashboardTitle {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a1a1a; /* Dark Gray */
+}
+  
+.signOut {
+    background-color: #dc3545; /* Red */
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+  
+.signOut:hover {
+    background-color: #b52b38;
+}
+  
+/* Welcome Section */
+.welcomeSection {
+    text-align: center;
+    margin-bottom: 20px;
+}
+  
+.userName {
+    font-weight: bold;
+    color: #0f3460; /* Deep Blue */
+}
+  
+/* Action Buttons */
+.actionsSection {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+  
+.dashboardButton {
+    border: none;
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+  
+.viewEvents {
+    background-color: #0f3460; /* Deep Blue */
+    color: white;
+}
+  
+.createEvent {
+    background-color: #28a745; /* Green */
+    color: white;
+}
+  
+.viewEvents:hover {
+    background-color: #0a2645;
+}
+  
+.createEvent:hover {
+    background-color: #218838;
+}
+  
+/* Events Section */
+.organizerEvents h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: #1a1a1a; /* Dark Gray */
+}
+  
+.eventCard {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.12);
+    border-left: 5px solid #0f3460; /* Deep Blue */
+}
+  
+.eventCard h3 {
+    font-size: 18px;
+    color: #1a1a1a; /* Dark Gray */
+    margin-bottom: 5px;
+}
+  
+.eventCard p {
+    font-size: 14px;
+    color: #333333; /* Medium Gray */
+    margin: 5px 0;
+}
+  
+.eventCard h4 {
+    font-size: 16px;
+    margin-top: 10px;
+    color: #1a1a1a;
+}
+  
+/* Participant List */
+.eventCard ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 5px;
+}
+  
+.eventCard li {
+    font-size: 14px;
+    padding: 5px;
+    background: #f8f9fa; /* Light Gray */
+    margin-bottom: 5px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+}
+  
+.eventCard li strong {
+    margin-right: 5px;
+    color: #0f3460; /* Deep Blue */
+}
+  
+/* No Participants Text */
+.eventCard p:last-child {
+    font-style: italic;
+    color: #999;
+}
+  
+/* Footer */
+.dashboardFooter {
+    text-align: center;
+    font-size: 12px;
+    margin-top: 20px;
+    color: #333333; /* Medium Gray */
+}

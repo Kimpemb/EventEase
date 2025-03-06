@@ -1,5 +1,9 @@
-import "@/styles/globals.css"; // Ensure this path is correct
+import '@/styles/globals.css'; // Ensure the path is correct
+import "../styles/dashboard.css";
 
-export default function MyApp({ Component, pageProps }) {
+
+function MyApp({ Component, pageProps }) {
   return <Component {...pageProps} />;
 }
+
+export default MyApp;

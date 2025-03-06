@@ -1,32 +1,49 @@
-// pages/dashboard.js
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "../firebase/firebaseConfig";
+import { getOrganizerEvents, getEventParticipants } from "../firebase/firebaseEvents";
 import Link from "next/link";
+import styles from "../styles/dashboard.module.css";
 
 const DashboardPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const [events, setEvents] = useState([]);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setUser(user);
-      } else {
-        router.push("/signin"); // Redirect to sign-in if user is not authenticated
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        router.replace("/signin");
+        return;
       }
+      setUser(user);
       setLoading(false);
+
+      try {
+        const userEvents = await getOrganizerEvents(user.uid);
+        const eventsWithParticipants = await Promise.all(
+          userEvents.map(async (event) => {
+            const participants = (await getEventParticipants(event.id)) || [];
+            return { ...event, participants };
+          })
+        );
+        setEvents(eventsWithParticipants);
+      } catch (error) {
+        console.error("Error fetching organizer events:", error);
+        setError("Failed to load events. Please try again later.");
+      }
     });
 
-    return () => unsubscribe(); // Cleanup subscription
+    return () => unsubscribe();
   }, [router]);
 
   const handleSignOut = async () => {
     try {
       await auth.signOut();
-      router.push("/signin"); // Redirect to sign-in after signing out
+      router.replace("/signin");
+      window.location.reload();
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -34,43 +51,68 @@ const DashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        <p className="text-lg text-gray-500">Loading...</p>
+      <div className={styles.loadingContainer}>
+        <p className={styles.loadingText}>Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen bg-gray-100">
-      <div className="text-center p-8 bg-white rounded-lg shadow-lg w-3/4 md:w-1/2">
-        <h1 className="text-4xl font-semibold text-gray-800 mb-4">
-          Welcome to your Dashboard!
-        </h1>
-        <p className="text-xl text-gray-600 mb-6">
-          Hello, {user.displayName || user.email}
-        </p>
+    <div className={styles.dashboardContainer}>
+      <div className={styles.dashboardPanel}>
+        <header className={styles.dashboardHeader}>
+          <h1 className={styles.dashboardTitle}>Dashboard</h1>
+          <button onClick={handleSignOut} className={styles.signOut}>Sign Out</button>
+        </header>
 
-        {/* View Events Button */}
-        <Link href="/events">
-          <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300">
-            View All Events
-          </button>
-        </Link>
+        <section className={styles.welcomeSection}>
+          <p className={styles.welcomeText}>
+            Welcome back, <span className={styles.userName}>{user.displayName || user.email}</span>!
+          </p>
+        </section>
 
-        {/* Create Event Button */}
-        <Link href="/create-event">
-          <button className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300">
-            Create Event
-          </button>
-        </Link>
+        <section className={styles.actionsSection}>
+          <Link href="/events" passHref>
+            <button className={`${styles.dashboardButton} ${styles.viewEvents}`}>View All Events</button>
+          </Link>
 
-        {/* Sign Out Button */}
-        <button
-          onClick={handleSignOut}
-          className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
-        >
-          Sign Out
-        </button>
+          <Link href="/create-event" passHref>
+            <button className={`${styles.dashboardButton} ${styles.createEvent}`}>Create Event</button>
+          </Link>
+        </section>
+
+        <section className={styles.organizerEvents}>
+          <h2>Your Events & Participants</h2>
+          {error ? (
+            <p className={styles.error}>{error}</p>
+          ) : events.length === 0 ? (
+            <p>No events created yet.</p>
+          ) : (
+            events.map((event) => (
+              <div key={event.id} className={styles.eventCard}>
+                <h3>{event.title}</h3>
+                <p>{event.date} at {event.time}</p>
+                <p>Location: {event.location}</p>
+                <h4>Participants:</h4>
+                {event.participants?.length > 0 ? (
+                  <ul>
+                    {event.participants.map((participant, index) => (
+                      <li key={index}>
+                        <strong>{participant.username || "Unknown"}</strong> ({participant.email || "No email provided"})
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No participants yet.</p>
+                )}
+              </div>
+            ))
+          )}
+        </section>
+
+        <footer className={styles.dashboardFooter}>
+          {new Date().toLocaleDateString()} • Dashboard v1.0
+        </footer>
       </div>
     </div>
   );

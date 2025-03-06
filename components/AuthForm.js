@@ -1,18 +1,26 @@
-// components/AuthForm.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signUp, login } from "../firebase/firebaseAuth";
 import styles from "./AuthForm.module.css";
-import Link from "next/link"; // Import Next.js Link for navigation
-import { useRouter } from "next/router"; // Import useRouter for redirection
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 const AuthForm = ({ isSignUp = true }) => {
-  const [username, setUsername] = useState(""); // State for username
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [loading, setLoading] = useState(false); // Loading state
-  const router = useRouter(); // Initialize useRouter for redirection
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  // Reset fields when component mounts (prevents data retention)
+  useEffect(() => {
+    setEmail("");
+    setPassword("");
+    setUsername("");
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  }, []);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -22,21 +30,19 @@ const AuthForm = ({ isSignUp = true }) => {
 
     try {
       if (isSignUp) {
-        // Sign up with username, email, and password
-        const user = await signUp(email, password, username); // Pass username to signUp
+        const user = await signUp(email, password, username);
         setSuccessMessage("Sign-up successful!");
         console.log("User:", user);
       } else {
-        // Log in with email and password
         const user = await login(email, password);
         setSuccessMessage("Sign-in successful!");
         console.log("User:", user);
-        router.push("/dashboard"); // Redirect to dashboard on successful sign-in
+        router.push("/dashboard");
       }
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -44,11 +50,9 @@ const AuthForm = ({ isSignUp = true }) => {
     <div className={styles.container}>
       <h2 className={styles.title}>{isSignUp ? "Sign Up" : "Sign In"}</h2>
 
-      {/* Display error or success messages */}
       {errorMessage && <p className={styles.error}>{errorMessage}</p>}
       {successMessage && <p className={styles.success}>{successMessage}</p>}
 
-      {/* Form for username, email, and password */}
       <form onSubmit={handleFormSubmit} className={styles.form}>
         {isSignUp && (
           <input
@@ -76,28 +80,15 @@ const AuthForm = ({ isSignUp = true }) => {
           className={styles.input}
           required
         />
-        <button
-          type="submit"
-          className={styles.button}
-          disabled={loading} // Disable button while loading
-        >
-          {loading
-            ? isSignUp
-              ? "Signing Up..."
-              : "Signing In..."
-            : isSignUp
-            ? "Sign Up"
-            : "Sign In"}
+        <button type="submit" className={styles.button} disabled={loading}>
+          {loading ? (isSignUp ? "Signing Up..." : "Signing In...") : isSignUp ? "Sign Up" : "Sign In"}
         </button>
       </form>
 
-      {/* Switch between Sign Up and Sign In */}
       <p className={styles.switchText}>
         {isSignUp ? "Already have an account? " : "Don't have an account? "}
         <Link href={isSignUp ? "/signin" : "/signup"}>
-          <span className={styles.switchLink}>
-            {isSignUp ? "Sign In" : "Sign Up"}
-          </span>
+          <span className={styles.switchLink}>{isSignUp ? "Sign In" : "Sign Up"}</span>
         </Link>
       </p>
     </div>
