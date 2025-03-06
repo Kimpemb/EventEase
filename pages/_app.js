@@ -1,6 +1,4 @@
-import '@/styles/globals.css'; // Ensure the path is correct
-import "../styles/dashboard.css";
-
+import '@/styles/globals.css'; // ✅ Only here
 
 function MyApp({ Component, pageProps }) {
   return <Component {...pageProps} />;

@@ -17,20 +17,21 @@ const EventsPage = () => {
       try {
         const eventsList = await getEvents();
         const updatedEvents = await Promise.all(eventsList.map(async (event) => {
-          if (auth.currentUser?.uid === event.userId) {
-            try {
+          try {
+            if (auth.currentUser?.uid === event.userId) {
               const participantEmails = await getEventParticipants(event.id);
               return { ...event, participantEmails };
-            } catch {
-              return { ...event, participantEmails: [] };
             }
+          } catch (participantError) {
+            console.error("Error fetching participants:", participantError);
+            return { ...event, participantEmails: [] };
           }
           return { ...event, participantEmails: null };
         }));
         setEvents(updatedEvents);
       } catch (err) {
         console.error("Error fetching events:", err);
-        setError("Failed to load events.");
+        setError("Failed to load events. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -47,18 +48,24 @@ const EventsPage = () => {
       return;
     }
 
+    if (!auth.currentUser) {
+      alert("You must be signed in to join an event.");
+      return;
+    }
+
     try {
       await joinEvent(event.id);
       alert("You have successfully joined the event!");
       setEvents((prevEvents) =>
         prevEvents.map((e) =>
           e.id === event.id
-            ? { ...e, participants: [...e.participants, auth.currentUser.uid] }
+            ? { ...e, participants: [...(e.participants || []), auth.currentUser.uid] }
             : e
         )
       );
     } catch (err) {
-      alert(err.message || "Failed to join event.");
+      console.error("Error joining event:", err);
+      alert(err.message || "Failed to join event. Please try again later.");
     }
   };
 
