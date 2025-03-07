@@ -5,6 +5,7 @@ import {
   doc,
   updateDoc,
   arrayUnion,
+  arrayRemove,
   getDoc,
   serverTimestamp,
   query,
@@ -128,6 +129,36 @@ export const joinEvent = async (eventId) => {
   }
 };
 
+// Function to leave an event
+export const leaveEvent = async (eventId) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+
+    const eventRef = doc(db, "events", eventId);
+    const eventSnap = await getDoc(eventRef);
+
+    if (!eventSnap.exists()) throw new Error("Event not found");
+
+    const eventData = eventSnap.data();
+    if (eventData.status !== "Upcoming") {
+      throw new Error("Cannot leave an event that has already started or ended.");
+    }
+
+    if (!eventData.participants?.includes(user.uid)) {
+      console.log("User is not a participant of this event");
+      return { success: false, message: "Not a participant of this event" };
+    }
+
+    await updateDoc(eventRef, { participants: arrayRemove(user.uid) });
+    console.log("User left event successfully");
+    return { success: true, message: "Successfully left the event." };
+  } catch (error) {
+    console.error("Error leaving event:", error);
+    return { success: false, message: "Error leaving event" };
+  }
+};
+
 // Function to update event status (Started, Ended, Canceled)
 export const updateEventStatus = async (eventId, status) => {
   try {
@@ -141,7 +172,7 @@ export const updateEventStatus = async (eventId, status) => {
 
 // Function to cancel an event
 export const cancelEvent = async (eventId) => {
-  return updateEventStatus(eventId, "canceled");
+  return updateEventStatus(eventId, "Canceled");
 };
 
 // Function to get participants' emails (Only for the organizer)

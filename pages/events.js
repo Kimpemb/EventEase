@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getEvents, joinEvent, getEventParticipants } from "../firebase/firebaseEvents";
+import { getEvents, joinEvent, leaveEvent, getEventParticipants } from "../firebase/firebaseEvents";
 import { auth } from "../firebase/firebaseConfig";
 import styles from "../styles/Events.module.css";
 
@@ -72,6 +72,37 @@ const EventsPage = () => {
     }
   };
 
+  const handleLeaveEvent = async (event) => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("You must be signed in to leave an event.");
+      return;
+    }
+    if (event.status === "Ended" || event.status === "Cancelled") {
+      alert("You cannot leave this event.");
+      return;
+    }
+    if (!event.participants?.includes(user.uid)) {
+      alert("You are not a participant of this event.");
+      return;
+    }
+
+    try {
+      await leaveEvent(event.id);
+      alert("You have successfully left the event!");
+      setEvents((prevEvents) =>
+        prevEvents.map((e) =>
+          e.id === event.id
+            ? { ...e, participants: e.participants?.filter((id) => id !== user.uid) }
+            : e
+        )
+      );
+    } catch (err) {
+      console.error("Error leaving event:", err);
+      alert(err.message || "Failed to leave event. Please try again later.");
+    }
+  };
+
   const filteredEvents = events.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
     const matchesSearch = search ? event.title?.toLowerCase().includes(search.toLowerCase()) : true;
@@ -123,13 +154,23 @@ const EventsPage = () => {
                 <p className={styles.organizer}>Organizer: {event.organizer || "Unknown"}</p>
                 <p className={styles.status}>Status: {event.status || "Upcoming"}</p>
                 {auth.currentUser && auth.currentUser.uid !== event.userId && event.status === "Upcoming" && (
-                  <button
-                    onClick={() => handleJoinEvent(event)}
-                    disabled={event.participants?.includes(auth.currentUser?.uid)}
-                    className={styles.joinButton}
-                  >
-                    {event.participants?.includes(auth.currentUser?.uid) ? "Joined" : "Join Event"}
-                  </button>
+                  <div className={styles.buttonContainer}>
+                    {event.participants?.includes(auth.currentUser?.uid) ? (
+                      <button
+                        onClick={() => handleLeaveEvent(event)}
+                        className={styles.leaveButton}
+                      >
+                        Leave Event
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleJoinEvent(event)}
+                        className={styles.joinButton}
+                      >
+                        Join Event
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             ))
