@@ -8,7 +8,8 @@ const CreateEventPage = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("General");
   const [error, setError] = useState("");
@@ -29,9 +30,17 @@ const CreateEventPage = () => {
       return;
     }
 
-    const eventDateTime = new Date(`${date}T${time}`);
-    if (eventDateTime <= new Date()) {
-      setError("Event date and time must be in the future.");
+    const eventStart = new Date(`${date}T${startTime}`);
+    const eventEnd = new Date(`${date}T${endTime}`);
+
+    if (eventStart <= new Date()) {
+      setError("Event start time must be in the future.");
+      setLoading(false);
+      return;
+    }
+
+    if (eventEnd <= eventStart) {
+      setError("End time must be after the start time.");
       setLoading(false);
       return;
     }
@@ -41,7 +50,8 @@ const CreateEventPage = () => {
         title,
         description,
         date,
-        time,
+        startTime,
+        endTime,
         location,
         category,
         userId: user.uid,
@@ -52,7 +62,8 @@ const CreateEventPage = () => {
       setTitle("");
       setDescription("");
       setDate("");
-      setTime("");
+      setStartTime("");
+      setEndTime("");
       setLocation("");
       setCategory("General");
 
@@ -123,11 +134,21 @@ const CreateEventPage = () => {
               />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.inputLabel}>Time</label>
+              <label className={styles.inputLabel}>Start Time</label>
               <input
                 type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className={styles.timeInput}
+                required
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.inputLabel}>End Time</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
                 className={styles.timeInput}
                 required
               />
