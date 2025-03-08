@@ -60,56 +60,96 @@ const DashboardPage = () => {
   return (
     <div className={styles.dashboardContainer}>
       <div className={styles.dashboardPanel}>
+        {/* Header */}
         <header className={styles.dashboardHeader}>
-          <h1 className={styles.dashboardTitle}>Dashboard</h1>
-          <button onClick={handleSignOut} className={styles.signOut}>Sign Out</button>
+          <h1 className={styles.dashboardTitle}>EventEase Dashboard</h1>
+          <button onClick={handleSignOut} className={styles.signOut}>🔓 Logout</button>
         </header>
 
+        {/* Welcome Section */}
         <section className={styles.welcomeSection}>
           <p className={styles.welcomeText}>
-            Welcome back, <span className={styles.userName}>{user.displayName || user.email}</span>!
+            Welcome back, <span className={styles.userName}>{user.displayName || user.email}</span>! 👋
           </p>
+          <div className={styles.eventSummary}>
+            <span>Upcoming Events: <strong>[3]</strong></span>
+            <span>Joined Events: <strong>[5]</strong></span>
+            <span>Past Events: <strong>[10]</strong></span>
+          </div>
         </section>
 
-        <section className={styles.actionsSection}>
-          <Link href="/events" passHref>
-            <button className={`${styles.dashboardButton} ${styles.viewEvents}`}>View All Events</button>
-          </Link>
+        {/* Quick Actions */}
+        <section className={styles.quickActions}>
+  <h2>🚀 Quick Actions</h2>
+  <div className={styles.actionButtons}>
+    <Link href="/create-event" passHref>
+      <button className={`${styles.dashboardButton} ${styles.createEvent}`}>+ Create Event</button>
+    </Link>
+    <Link href="/events" passHref>
+      <button className={`${styles.dashboardButton} ${styles.viewEvents}`}>View All Events</button>
+    </Link>
+    <button className={`${styles.dashboardButton} ${styles.search}`}>🔍 Search</button>
+    <button className={`${styles.dashboardButton} ${styles.filter}`}>📅 Filter</button>
+  </div>
+</section>
 
-          <Link href="/create-event" passHref>
-            <button className={`${styles.dashboardButton} ${styles.createEvent}`}>Create Event</button>
-          </Link>
-        </section>
-
-        <section className={styles.organizerEvents}>
-          <h2>Your Events & Participants</h2>
+        {/* Upcoming Events */}
+        <section className={styles.upcomingEvents}>
+          <h2>📅 Upcoming Events</h2>
           {error ? (
             <p className={styles.error}>{error}</p>
           ) : events.length === 0 ? (
             <p>No events created yet.</p>
           ) : (
-            events.map((event) => (
-              <div key={event.id} className={styles.eventCard}>
-                <h3>{event.title}</h3>
-                <p>{event.date} at {event.time}</p>
-                <p>Location: {event.location}</p>
-                <h4>Participants:</h4>
-                {event.participants?.length > 0 ? (
-                  <ul>
-                    {event.participants.map((participant, index) => (
-                      <li key={index}>
-                        <strong>{participant.username || "Unknown"}</strong> ({participant.email || "No email provided"})
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No participants yet.</p>
-                )}
-              </div>
-            ))
+            <div className={styles.eventList}>
+              {events.map((event) => (
+                <div key={event.id} className={styles.eventCard}>
+                  <h3>{event.title}</h3>
+                  <p>Date: {event.date} | Time: {event.time}</p>
+                  <p>Location: {event.location}</p>
+                  <h4>Participants:</h4>
+                  {event.participants?.length > 0 ? (
+                    <ul>
+                      {event.participants.map((participant, index) => (
+                        <li key={index}>
+                          <strong>{participant.username || "Unknown"}</strong> ({participant.email || "No email provided"})
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No participants yet.</p>
+                  )}
+                  <button className={styles.joinButton}>Join</button>
+                </div>
+              ))}
+            </div>
           )}
+          <a href="#" className={styles.viewMore}>View More...</a>
         </section>
 
+        {/* Notifications */}
+<section className={styles.notifications}>
+  <h2>🔔 Notifications</h2>
+  <div className={styles.notificationList}>
+    <div className={styles.notification}>
+      <span className={styles.icon}>📢</span>
+      <p>Event &quot;Music Fest&quot; starts in 2 days!</p>
+      <button className={styles.markRead}>Mark as Read</button>
+    </div>
+    <div className={styles.notification}>
+      <span className={styles.icon}>❌</span>
+      <p>Event &quot;Tech Meetup&quot; was canceled.</p>
+      <button className={styles.markRead}>Mark as Read</button>
+    </div>
+    <div className={styles.notification}>
+      <span className={styles.icon}>📩</span>
+      <p>Verify your email to access all features.</p>
+      <button className={styles.markRead}>Mark as Read</button>
+    </div>
+  </div>
+</section>
+
+        {/* Footer */}
         <footer className={styles.dashboardFooter}>
           {new Date().toLocaleDateString()} • Dashboard v1.0
         </footer>
