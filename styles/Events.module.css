@@ -71,8 +71,13 @@
     color: #0f172a; /* Deep Blue */
 }
 
-.joinButton {
+.buttonContainer {
+    display: flex;
+    gap: 12px;
     margin-top: 12px;
+}
+
+.joinButton {
     padding: 10px 16px;
     font-size: 16px;
     font-weight: 600;
@@ -92,4 +97,37 @@
 .joinButton:disabled {
     background-color: #6b7280; /* Dark Gray */
     cursor: not-allowed;
+}
+
+.leaveButton {
+    padding: 10px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #dc2626; /* Red */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.leaveButton:hover {
+    background-color: #b91c1c; /* Darker Red */
+    transform: scale(1.02);
+}
+
+.leaveButton:disabled {
+    background-color: #6b7280; /* Dark Gray */
+    cursor: not-allowed;
+}
+
+.loading, .error, .noEvents {
+    font-size: 18px;
+    font-weight: 500;
+    color: #1f2937; /* Dark Grayish Black */
+    text-align: center;
+}
+
+.error {
+    color: #dc2626; /* Red */
 }

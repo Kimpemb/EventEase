@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDhJqp7xHIMHk7r6Ej_1PtWJLZPmzqokBE",
   authDomain: "eventease-1c3a0.firebaseapp.com",
@@ -14,10 +15,23 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Export Firestore and Auth
+// Initialize Firestore
 export const db = getFirestore(app);
+
+// Initialize Authentication
 export const auth = getAuth(app);
 
-// Google Sign-In functionality
-const provider = new GoogleAuthProvider();
-export const signInWithGoogle = () => signInWithPopup(auth, provider);
+// Google Sign-In provider
+const googleProvider = new GoogleAuthProvider();
+
+// Google Sign-In function with error handling
+export const signInWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    console.log("Signed in user:", result.user);
+    return result.user; // Return the user object for further use
+  } catch (error) {
+    console.error("Error signing in with Google:", error);
+    throw error; // Re-throw the error for handling in the calling function
+  }
+};
