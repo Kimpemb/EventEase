@@ -13,7 +13,6 @@ const AuthForm = ({ isSignUp = true }) => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Reset fields when component mounts (prevents data retention)
   useEffect(() => {
     setEmail("");
     setPassword("");
