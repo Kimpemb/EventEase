@@ -1,7 +1,8 @@
 /* General Styles */
 .dashboardContainer {
     display: flex;
-    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     padding: 20px;
     background-color: #f8f9fa; /* Light Gray */
     min-height: 100vh;
@@ -30,25 +31,70 @@
     color: #1a1a1a; /* Dark Gray */
   }
   
-  .signOut {
-    background-color: #dc3545; /* Red */
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .searchBar {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    width: 200px; /* Fixed width for search bar */
+  }
+  
+  .filterButton, .createEventButton, .viewEventsButton, .notificationsButton, .signOut {
+    background-color: #0f3460; /* Deep Blue */
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 8px 12px;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
     transition: background 0.3s ease;
   }
   
-  .signOut:hover {
-    background-color: #b52b38; /* Darker Red */
+  .filterButton {
+    background-color: #6c757d; /* Gray */
+  }
+  
+  .createEventButton {
+    background-color: #28a745; /* Green */
+  }
+  
+  .viewEventsButton {
+    background-color: #0f3460; /* Deep Blue */
+  }
+  
+  .notificationsButton {
+    background-color: #ffc107; /* Yellow */
+    color: black;
+  }
+  
+  .signOut {
+    background-color: #dc3545; /* Red */
+  }
+  
+  .filterButton:hover, .createEventButton:hover, .viewEventsButton:hover, .notificationsButton:hover, .signOut:hover {
+    opacity: 0.9;
+  }
+  
+  .username {
+    font-weight: bold;
+    color: #0f3460; /* Deep Blue */
   }
   
   /* Welcome Section */
   .welcomeSection {
-    text-align: left; /* Align text to the left */
+    text-align: left;
     margin-bottom: 20px;
+  }
+  
+  .welcomeText {
+    font-size: 18px;
+    color: #1a1a1a; /* Dark Gray */
   }
   
   .userName {
@@ -68,67 +114,6 @@
     color: #0f3460; /* Deep Blue */
   }
   
-  /* Quick Actions */
-  .quickActions {
-    margin-bottom: 20px;
-  }
-  
-  .quickActions h2 {
-    font-size: 20px;
-    margin-bottom: 10px;
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
-  .actionButtons {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .dashboardButton {
-    border: none;
-    padding: 10px 15px;
-    font-size: 14px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-  
-  .createEvent {
-    background-color: #28a745; /* Green */
-    color: white;
-  }
-  
-  .viewEvents {
-    background-color: #0f3460; /* Deep Blue */
-    color: white;
-  }
-  
-  .search {
-    background-color: #0f3460; /* Deep Blue */
-    color: white;
-  }
-  
-  .filter {
-    background-color: #6c757d; /* Gray */
-    color: white;
-  }
-  
-  .createEvent:hover {
-    background-color: #218838; /* Darker Green */
-  }
-  
-  .viewEvents:hover {
-    background-color: #0a2645; /* Darker Deep Blue */
-  }
-  
-  .search:hover {
-    background-color: #0a2645; /* Darker Deep Blue */
-  }
-  
-  .filter:hover {
-    background-color: #5a6268; /* Darker Gray */
-  }
-  
   /* Upcoming Events */
   .upcomingEvents {
     margin-bottom: 20px;
@@ -140,9 +125,10 @@
     color: #1a1a1a; /* Dark Gray */
   }
   
-  .eventList {
+  .eventGrid {
     display: grid;
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
+    gap: 20px; /* Spacing between cards */
   }
   
   .eventCard {
@@ -151,12 +137,18 @@
     border-radius: 8px;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.12);
     border-left: 5px solid #0f3460; /* Deep Blue */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .eventCard:hover {
+    transform: translateY(-5px); /* Lift card on hover */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
   }
   
   .eventCard h3 {
     font-size: 18px;
     color: #1a1a1a; /* Dark Gray */
-    margin-bottom: 5px;
+    margin-bottom: 10px;
   }
   
   .eventCard p {
@@ -165,24 +157,72 @@
     margin: 5px 0;
   }
   
+  .eventCard h4 {
+    font-size: 16px;
+    margin-top: 10px;
+    color: #1a1a1a; /* Dark Gray */
+  }
+  
+  .participantsList {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 5px;
+  }
+  
+  .participantsList li {
+    font-size: 14px;
+    padding: 5px;
+    background: #f8f9fa; /* Light Gray */
+    margin-bottom: 5px;
+    border-radius: 5px;
+  }
+  
+  .participantsList li strong {
+    color: #0f3460; /* Deep Blue */
+  }
+  
+  .buttonContainer {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
   .joinButton {
     background-color: #28a745; /* Green */
     color: white;
     border: none;
-    padding: 5px 10px;
+    padding: 8px 12px;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 14px;
     transition: background 0.3s ease;
+    width: 100%; /* Full width button */
   }
   
   .joinButton:hover {
     background-color: #218838; /* Darker Green */
   }
   
+  .leaveButton {
+    background-color: #dc3545; /* Red */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+    width: 100%; /* Full width button */
+  }
+  
+  .leaveButton:hover {
+    background-color: #b52b38; /* Darker Red */
+  }
+  
   .viewMore {
     display: block;
-    text-align: left; /* Align text to the left */
-    margin-top: 10px;
+    text-align: center;
+    margin-top: 20px;
     color: #0f3460; /* Deep Blue */
     text-decoration: none;
     font-size: 14px;
@@ -237,6 +277,20 @@
     background-color: #e0a800; /* Darker Yellow */
   }
   
+  .clearAll {
+    background-color: #dc3545; /* Red */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  .clearAll:hover {
+    background-color: #b52b38; /* Darker Red */
+  }
+  
   /* Profile & Settings */
   .profileSettings {
     margin-bottom: 20px;
@@ -253,32 +307,39 @@
     gap: 10px;
   }
   
-  .viewProfile {
+  .viewProfile, .changePassword, .privacySettings, .darkModeToggle {
     background-color: #0f3460; /* Deep Blue */
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 8px 12px;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 14px;
     transition: background 0.3s ease;
   }
   
-  .settings {
+  .darkModeToggle {
     background-color: #6c757d; /* Gray */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
   }
   
-  .viewProfile:hover {
-    background-color: #0a2645; /* Darker Deep Blue */
+  .viewProfile:hover, .changePassword:hover, .privacySettings:hover, .darkModeToggle:hover {
+    opacity: 0.9;
   }
   
-  .settings:hover {
-    background-color: #5a6268; /* Darker Gray */
+  /* Insights */
+  .insights {
+    margin-bottom: 20px;
+  }
+  
+  .insights h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: #1a1a1a; /* Dark Gray */
+  }
+  
+  .insightsContent {
+    font-size: 14px;
+    color: #333333; /* Medium Gray */
   }
   
   /* Footer */
@@ -287,4 +348,31 @@
     font-size: 12px;
     margin-top: 20px;
     color: #333333; /* Medium Gray */
+  }
+  
+  .socialLinks {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .socialLinks a {
+    color: #0f3460; /* Deep Blue */
+    text-decoration: none;
+  }
+  
+  .socialLinks a:hover {
+    text-decoration: underline;
+  }
+  
+  .contactSupport {
+    display: block;
+    margin-top: 10px;
+    color: #0f3460; /* Deep Blue */
+    text-decoration: none;
+  }
+  
+  .contactSupport:hover {
+    text-decoration: underline;
   }

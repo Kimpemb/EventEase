@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "../firebase/firebaseConfig";
-import { getOrganizerEvents, getEventParticipants } from "../firebase/firebaseEvents";
+import { getOrganizerEvents, getEventParticipants, joinEvent, leaveEvent } from "../firebase/firebaseEvents";
 import Link from "next/link";
 import styles from "../styles/dashboard.module.css";
+
+const categories = [
+  "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
+];
 
 const DashboardPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -39,6 +45,19 @@ const DashboardPage = () => {
     return () => unsubscribe();
   }, [router]);
 
+  // Calculate counts dynamically
+  const upcomingEventsCount = events.filter(
+    (event) => event.status === "Upcoming"
+  ).length;
+
+  const joinedEventsCount = events.filter(
+    (event) => event.participants?.includes(auth.currentUser?.uid)
+  ).length;
+
+  const pastEventsCount = events.filter(
+    (event) => event.status === "Ended" || event.status === "Cancelled"
+  ).length;
+
   const handleSignOut = async () => {
     try {
       await auth.signOut();
@@ -48,6 +67,74 @@ const DashboardPage = () => {
       console.error("Error signing out:", error);
     }
   };
+
+  const handleJoinEvent = async (event) => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("You must be signed in to join an event.");
+      return;
+    }
+    if (event.status === "Ended" || event.status === "Cancelled") {
+      alert("You cannot join this event.");
+      return;
+    }
+    if (event.participants?.includes(user.uid)) {
+      alert("You have already joined this event.");
+      return;
+    }
+
+    try {
+      await joinEvent(event.id);
+      alert("You have successfully joined the event!");
+      setEvents((prevEvents) =>
+        prevEvents.map((e) =>
+          e.id === event.id
+            ? { ...e, participants: [...(e.participants || []), user.uid] }
+            : e
+        )
+      );
+    } catch (err) {
+      console.error("Error joining event:", err);
+      alert(err.message || "Failed to join event. Please try again later.");
+    }
+  };
+
+  const handleLeaveEvent = async (event) => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("You must be signed in to leave an event.");
+      return;
+    }
+    if (event.status === "Ended" || event.status === "Cancelled") {
+      alert("You cannot leave this event.");
+      return;
+    }
+    if (!event.participants?.includes(user.uid)) {
+      alert("You are not a participant of this event.");
+      return;
+    }
+
+    try {
+      await leaveEvent(event.id);
+      alert("You have successfully left the event!");
+      setEvents((prevEvents) =>
+        prevEvents.map((e) =>
+          e.id === event.id
+            ? { ...e, participants: e.participants?.filter((id) => id !== user.uid) }
+            : e
+        )
+      );
+    } catch (err) {
+      console.error("Error leaving event:", err);
+      alert(err.message || "Failed to leave event. Please try again later.");
+    }
+  };
+
+  const filteredEvents = events.filter((event) => {
+    const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
+    const matchesSearch = search ? event.title?.toLowerCase().includes(search.toLowerCase()) : true;
+    return matchesCategory && matchesSearch;
+  });
 
   if (loading) {
     return (
@@ -62,8 +149,37 @@ const DashboardPage = () => {
       <div className={styles.dashboardPanel}>
         {/* Header */}
         <header className={styles.dashboardHeader}>
-          <h1 className={styles.dashboardTitle}>EventEase Dashboard</h1>
-          <button onClick={handleSignOut} className={styles.signOut}>🔓 Logout</button>
+          <h1 className={styles.dashboardTitle}>EventEase</h1>
+          <div className={styles.headerActions}>
+            <input
+              type="text"
+              placeholder="🔍 Search events..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={styles.searchBar}
+            />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className={styles.filterButton}
+            >
+              <option value="">All Categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+            <Link href="/create-event" passHref>
+              <button className={styles.createEventButton}>🟢 Create Event</button>
+            </Link>
+            <Link href="/events" passHref>
+              <button className={styles.viewEventsButton}>🔵 View All Events</button>
+            </Link>
+            <span className={styles.username}>{user.displayName || user.email}</span>
+            <button className={styles.notificationsButton}>🔔(3)</button>
+            <button onClick={handleSignOut} className={styles.signOut}>🔓 Logout</button>
+          </div>
         </header>
 
         {/* Welcome Section */}
@@ -72,44 +188,32 @@ const DashboardPage = () => {
             Welcome back, <span className={styles.userName}>{user.displayName || user.email}</span>! 👋
           </p>
           <div className={styles.eventSummary}>
-            <span>Upcoming Events: <strong>[3]</strong></span>
-            <span>Joined Events: <strong>[5]</strong></span>
-            <span>Past Events: <strong>[10]</strong></span>
+            <span>Upcoming Events: <strong>{upcomingEventsCount}</strong></span>
+            <span>Joined Events: <strong>{joinedEventsCount}</strong></span>
+            <span>Past Events: <strong>{pastEventsCount}</strong></span>
           </div>
         </section>
-
-        {/* Quick Actions */}
-        <section className={styles.quickActions}>
-  <h2>🚀 Quick Actions</h2>
-  <div className={styles.actionButtons}>
-    <Link href="/create-event" passHref>
-      <button className={`${styles.dashboardButton} ${styles.createEvent}`}>+ Create Event</button>
-    </Link>
-    <Link href="/events" passHref>
-      <button className={`${styles.dashboardButton} ${styles.viewEvents}`}>View All Events</button>
-    </Link>
-    <button className={`${styles.dashboardButton} ${styles.search}`}>🔍 Search</button>
-    <button className={`${styles.dashboardButton} ${styles.filter}`}>📅 Filter</button>
-  </div>
-</section>
 
         {/* Upcoming Events */}
         <section className={styles.upcomingEvents}>
           <h2>📅 Upcoming Events</h2>
           {error ? (
             <p className={styles.error}>{error}</p>
-          ) : events.length === 0 ? (
-            <p>No events created yet.</p>
+          ) : filteredEvents.length === 0 ? (
+            <p>No events available.</p>
           ) : (
-            <div className={styles.eventList}>
-              {events.map((event) => (
+            <div className={styles.eventGrid}>
+              {filteredEvents.map((event) => (
                 <div key={event.id} className={styles.eventCard}>
                   <h3>{event.title}</h3>
                   <p>Date: {event.date} | Time: {event.time}</p>
                   <p>Location: {event.location}</p>
+                  <p>Category: {event.category || "Uncategorized"}</p>
+                  <p>Organizer: {event.organizer || "Unknown"}</p>
+                  <p>Status: {event.status || "Upcoming"}</p>
                   <h4>Participants:</h4>
                   {event.participants?.length > 0 ? (
-                    <ul>
+                    <ul className={styles.participantsList}>
                       {event.participants.map((participant, index) => (
                         <li key={index}>
                           <strong>{participant.username || "Unknown"}</strong> ({participant.email || "No email provided"})
@@ -119,7 +223,25 @@ const DashboardPage = () => {
                   ) : (
                     <p>No participants yet.</p>
                   )}
-                  <button className={styles.joinButton}>Join</button>
+                  {auth.currentUser && auth.currentUser.uid !== event.userId && event.status === "Upcoming" && (
+                    <div className={styles.buttonContainer}>
+                      {event.participants?.includes(auth.currentUser?.uid) ? (
+                        <button
+                          onClick={() => handleLeaveEvent(event)}
+                          className={styles.leaveButton}
+                        >
+                          Leave Event
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleJoinEvent(event)}
+                          className={styles.joinButton}
+                        >
+                          Join Event
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -128,30 +250,57 @@ const DashboardPage = () => {
         </section>
 
         {/* Notifications */}
-<section className={styles.notifications}>
-  <h2>🔔 Notifications</h2>
-  <div className={styles.notificationList}>
-    <div className={styles.notification}>
-      <span className={styles.icon}>📢</span>
-      <p>Event &quot;Music Fest&quot; starts in 2 days!</p>
-      <button className={styles.markRead}>Mark as Read</button>
-    </div>
-    <div className={styles.notification}>
-      <span className={styles.icon}>❌</span>
-      <p>Event &quot;Tech Meetup&quot; was canceled.</p>
-      <button className={styles.markRead}>Mark as Read</button>
-    </div>
-    <div className={styles.notification}>
-      <span className={styles.icon}>📩</span>
-      <p>Verify your email to access all features.</p>
-      <button className={styles.markRead}>Mark as Read</button>
-    </div>
-  </div>
-</section>
+        <section className={styles.notifications}>
+          <h2>🔔 Notifications</h2>
+          <div className={styles.notificationList}>
+            <div className={styles.notification}>
+              <span className={styles.icon}>📢</span>
+              <p>Event &quot;Music Fest&quot; starts in 2 days!</p>
+              <button className={styles.markRead}>Mark as Read</button>
+            </div>
+            <div className={styles.notification}>
+              <span className={styles.icon}>❌</span>
+              <p>Event &quot;Tech Meetup&quot; was canceled.</p>
+              <button className={styles.markRead}>Mark as Read</button>
+            </div>
+            <div className={styles.notification}>
+              <span className={styles.icon}>📩</span>
+              <p>Verify your email to access all features.</p>
+              <button className={styles.markRead}>Mark as Read</button>
+            </div>
+          </div>
+          <button className={styles.clearAll}>Clear All</button>
+        </section>
+
+        {/* Profile & Settings */}
+        <section className={styles.profileSettings}>
+          <h2>👤 Profile & Settings</h2>
+          <div className={styles.profileActions}>
+            <button className={styles.viewProfile}>🖋️ Edit Profile</button>
+            <button className={styles.changePassword}>🔒 Change Password</button>
+            <button className={styles.privacySettings}>🛡️ Privacy Settings</button>
+            <button className={styles.darkModeToggle}>🌙 Dark Mode</button>
+          </div>
+        </section>
+
+        {/* Insights */}
+        <section className={styles.insights}>
+          <h2>📊 Insights</h2>
+          <div className={styles.insightsContent}>
+            <p>🎉 Most Popular Event: &quot;Music Fest&quot; (500 participants)</p>
+            <p>🤔 Events You Might Like: &quot;Art Expo&quot; | &quot;Tech Conference&quot;</p>
+          </div>
+        </section>
 
         {/* Footer */}
         <footer className={styles.dashboardFooter}>
-          {new Date().toLocaleDateString()} • Dashboard v1.0
+          <p>{new Date().toLocaleDateString()} • EventEase v1.0</p>
+          <div className={styles.socialLinks}>
+            <a href="#">Twitter</a>
+            <a href="#">Facebook</a>
+            <a href="#">Instagram</a>
+          </div>
+          <a href="#" className={styles.contactSupport}>Contact Support</a>
         </footer>
       </div>
     </div>

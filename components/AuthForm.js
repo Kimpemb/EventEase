@@ -13,13 +13,14 @@ const AuthForm = ({ isSignUp = true }) => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Reset fields when component mounts or form type changes
   useEffect(() => {
     setEmail("");
     setPassword("");
     setUsername("");
     setErrorMessage(null);
     setSuccessMessage(null);
-  }, []);
+  }, [isSignUp]);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -29,17 +30,42 @@ const AuthForm = ({ isSignUp = true }) => {
 
     try {
       if (isSignUp) {
+        // Sign up logic
         const user = await signUp(email, password, username);
         setSuccessMessage("Sign-up successful!");
         console.log("User:", user);
       } else {
+        // Login logic
         const user = await login(email, password);
         setSuccessMessage("Sign-in successful!");
         console.log("User:", user);
-        router.push("/dashboard");
+
+        // Redirect to dashboard after successful login
+        try {
+          await router.push("/dashboard");
+        } catch (error) {
+          console.error("Redirect error:", error); // Log the error
+          setErrorMessage("Failed to redirect. Please try again.");
+        }
       }
     } catch (error) {
-      setErrorMessage(error.message);
+      // Handle Firebase authentication errors
+      console.error("Error:", error); // Log the error
+      let message = "An error occurred. Please try again.";
+      switch (error.code) {
+        case "auth/user-not-found":
+          message = "User not found. Please sign up.";
+          break;
+        case "auth/wrong-password":
+          message = "Incorrect password. Please try again.";
+          break;
+        case "auth/email-already-in-use":
+          message = "Email already in use. Please sign in.";
+          break;
+        default:
+          message = error.message; // Use the error message
+      }
+      setErrorMessage(message);
     } finally {
       setLoading(false);
     }
@@ -49,9 +75,11 @@ const AuthForm = ({ isSignUp = true }) => {
     <div className={styles.container}>
       <h2 className={styles.title}>{isSignUp ? "Sign Up" : "Sign In"}</h2>
 
+      {/* Display error and success messages */}
       {errorMessage && <p className={styles.error}>{errorMessage}</p>}
       {successMessage && <p className={styles.success}>{successMessage}</p>}
 
+      {/* Form */}
       <form onSubmit={handleFormSubmit} className={styles.form}>
         {isSignUp && (
           <input
@@ -84,6 +112,7 @@ const AuthForm = ({ isSignUp = true }) => {
         </button>
       </form>
 
+      {/* Switch between Sign Up and Sign In */}
       <p className={styles.switchText}>
         {isSignUp ? "Already have an account? " : "Don't have an account? "}
         <Link href={isSignUp ? "/signin" : "/signup"}>
