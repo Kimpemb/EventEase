@@ -1,378 +1,478 @@
 /* General Styles */
 .dashboardContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    background-color: #f8f9fa; /* Light Gray */
-    min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background-color: #f8f9fa; /* Light Gray */
+  min-height: 100vh;
+}
+
+.dashboardPanel {
+  width: 100%; /* Full width */
+  max-width: 1200px; /* Limit max width for larger screens */
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12);
+  color: #1a1a1a; /* Dark Gray */
+}
+
+/* Header */
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dashboardTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1a1a1a; /* Dark Gray */
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Hamburger Icon */
+.hamburger {
+  display: none; /* Hidden by default */
+  flex-direction: column;
+  justify-content: space-around;
+  width: 30px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1000; /* Ensure it's above other elements */
+}
+
+.hamburgerLine {
+  width: 100%;
+  height: 3px;
+  background: #0f3460; /* Deep Blue */
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Mobile Menu Styles */
+@media (max-width: 768px) {
+  .hamburger {
+    display: flex; /* Show hamburger on mobile */
   }
-  
-  .dashboardPanel {
-    width: 100%; /* Full width */
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12);
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
-  /* Header */
-  .dashboardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .dashboardTitle {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
+
   .headerActions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .searchBar {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 14px;
-    width: 200px; /* Fixed width for search bar */
-  }
-  
-  .filterButton, .createEventButton, .viewEventsButton, .notificationsButton, .signOut {
-    background-color: #0f3460; /* Deep Blue */
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-  }
-  
-  .filterButton {
-    background-color: #6c757d; /* Gray */
-  }
-  
-  .createEventButton {
-    background-color: #28a745; /* Green */
-  }
-  
-  .viewEventsButton {
-    background-color: #0f3460; /* Deep Blue */
-  }
-  
-  .notificationsButton {
-    background-color: #ffc107; /* Yellow */
-    color: black;
-  }
-  
-  .signOut {
-    background-color: #dc3545; /* Red */
-  }
-  
-  .filterButton:hover, .createEventButton:hover, .viewEventsButton:hover, .notificationsButton:hover, .signOut:hover {
-    opacity: 0.9;
-  }
-  
-  .username {
-    font-weight: bold;
-    color: #0f3460; /* Deep Blue */
-  }
-  
-  /* Welcome Section */
-  .welcomeSection {
-    text-align: left;
-    margin-bottom: 20px;
-  }
-  
-  .welcomeText {
-    font-size: 18px;
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
-  .userName {
-    font-weight: bold;
-    color: #0f3460; /* Deep Blue */
-  }
-  
-  .eventSummary {
-    display: flex;
-    gap: 20px;
-    margin-top: 10px;
-    font-size: 14px;
-    color: #333333; /* Medium Gray */
-  }
-  
-  .eventSummary strong {
-    color: #0f3460; /* Deep Blue */
-  }
-  
-  /* Upcoming Events */
-  .upcomingEvents {
-    margin-bottom: 20px;
-  }
-  
-  .upcomingEvents h2 {
-    font-size: 20px;
-    margin-bottom: 10px;
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
-  .eventGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
-    gap: 20px; /* Spacing between cards */
-  }
-  
-  .eventCard {
+    position: fixed; /* Fixed position for better mobile usability */
+    top: 70px; /* Adjust based on header height */
+    right: 20px;
     background: white;
-    padding: 15px;
     border-radius: 8px;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.12);
-    border-left: 5px solid #0f3460; /* Deep Blue */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .eventCard:hover {
-    transform: translateY(-5px); /* Lift card on hover */
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
-  }
-  
-  .eventCard h3 {
-    font-size: 18px;
-    color: #1a1a1a; /* Dark Gray */
-    margin-bottom: 10px;
-  }
-  
-  .eventCard p {
-    font-size: 14px;
-    color: #333333; /* Medium Gray */
-    margin: 5px 0;
-  }
-  
-  .eventCard h4 {
-    font-size: 16px;
-    margin-top: 10px;
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
-  .participantsList {
-    list-style-type: none;
-    padding: 0;
-    margin-top: 5px;
-  }
-  
-  .participantsList li {
-    font-size: 14px;
-    padding: 5px;
-    background: #f8f9fa; /* Light Gray */
-    margin-bottom: 5px;
-    border-radius: 5px;
-  }
-  
-  .participantsList li strong {
-    color: #0f3460; /* Deep Blue */
-  }
-  
-  .buttonContainer {
-    display: flex;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12);
+    flex-direction: column;
     gap: 10px;
-    margin-top: 10px;
+    padding: 15px;
+    width: 200px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+    opacity: 0;
+    visibility: hidden; /* Hide menu by default */
   }
-  
-  .joinButton {
-    background-color: #28a745; /* Green */
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-    width: 100%; /* Full width button */
+
+  .headerActions.menuOpen {
+    max-height: 400px; /* Adjust based on content */
+    opacity: 1;
+    visibility: visible; /* Show menu when open */
   }
-  
-  .joinButton:hover {
-    background-color: #218838; /* Darker Green */
-  }
-  
-  .leaveButton {
-    background-color: #dc3545; /* Red */
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-    width: 100%; /* Full width button */
-  }
-  
-  .leaveButton:hover {
-    background-color: #b52b38; /* Darker Red */
-  }
-  
-  .viewMore {
-    display: block;
+
+  /* Ensure full-width elements in the menu */
+  .searchBar,
+  .filterButton,
+  .createEventButton,
+  .viewEventsButton,
+  .notificationsButton,
+  .signOut {
+    width: 100%; /* Full width on mobile */
     text-align: center;
-    margin-top: 20px;
-    color: #0f3460; /* Deep Blue */
-    text-decoration: none;
-    font-size: 14px;
   }
-  
-  .viewMore:hover {
-    text-decoration: underline;
+
+  /* Optional: Add a backdrop for better UX */
+  .headerActions::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
+    z-index: -1; /* Place behind the menu */
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
-  
-  /* Notifications */
-  .notifications {
-    margin-bottom: 20px;
+
+  .headerActions.menuOpen::before {
+    opacity: 1; /* Show backdrop when menu is open */
   }
-  
-  .notifications h2 {
-    font-size: 20px;
-    margin-bottom: 10px;
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
-  .notificationList {
-    display: grid;
-    gap: 10px;
-  }
-  
-  .notification {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background: #f8f9fa; /* Light Gray */
-    border-radius: 5px;
-  }
-  
-  .notification p {
-    margin: 0;
-    font-size: 14px;
-    color: #333333; /* Medium Gray */
-  }
-  
-  .markRead {
-    background-color: #ffc107; /* Yellow */
-    color: black;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-  
-  .markRead:hover {
-    background-color: #e0a800; /* Darker Yellow */
-  }
-  
-  .clearAll {
-    background-color: #dc3545; /* Red */
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-  }
-  
-  .clearAll:hover {
-    background-color: #b52b38; /* Darker Red */
-  }
-  
-  /* Profile & Settings */
-  .profileSettings {
-    margin-bottom: 20px;
-  }
-  
-  .profileSettings h2 {
-    font-size: 20px;
-    margin-bottom: 10px;
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
-  .profileActions {
-    display: flex;
-    gap: 10px;
-  }
-  
-  .viewProfile, .changePassword, .privacySettings, .darkModeToggle {
-    background-color: #0f3460; /* Deep Blue */
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-  }
-  
-  .darkModeToggle {
-    background-color: #6c757d; /* Gray */
-  }
-  
-  .viewProfile:hover, .changePassword:hover, .privacySettings:hover, .darkModeToggle:hover {
-    opacity: 0.9;
-  }
-  
-  /* Insights */
-  .insights {
-    margin-bottom: 20px;
-  }
-  
-  .insights h2 {
-    font-size: 20px;
-    margin-bottom: 10px;
-    color: #1a1a1a; /* Dark Gray */
-  }
-  
-  .insightsContent {
-    font-size: 14px;
-    color: #333333; /* Medium Gray */
-  }
-  
-  /* Footer */
-  .dashboardFooter {
-    text-align: center;
-    font-size: 12px;
-    margin-top: 20px;
-    color: #333333; /* Medium Gray */
-  }
-  
-  .socialLinks {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  
-  .socialLinks a {
-    color: #0f3460; /* Deep Blue */
-    text-decoration: none;
-  }
-  
-  .socialLinks a:hover {
-    text-decoration: underline;
-  }
-  
-  .contactSupport {
-    display: block;
-    margin-top: 10px;
-    color: #0f3460; /* Deep Blue */
-    text-decoration: none;
-  }
-  
-  .contactSupport:hover {
-    text-decoration: underline;
-  }
+}
+
+/* Search Bar */
+.searchBar {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  width: 200px; /* Fixed width for search bar */
+  flex: 1; /* Allow search bar to grow */
+}
+
+/* Buttons */
+.filterButton,
+.createEventButton,
+.viewEventsButton,
+.notificationsButton,
+.signOut {
+  background-color: #0f3460; /* Deep Blue */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.filterButton {
+  background-color: #6c757d; /* Gray */
+}
+
+.createEventButton {
+  background-color: #28a745; /* Green */
+}
+
+.viewEventsButton {
+  background-color: #0f3460; /* Deep Blue */
+}
+
+.notificationsButton {
+  background-color: #ffc107; /* Yellow */
+  color: black;
+}
+
+.signOut {
+  background-color: #dc3545; /* Red */
+}
+
+.filterButton:hover,
+.createEventButton:hover,
+.viewEventsButton:hover,
+.notificationsButton:hover,
+.signOut:hover {
+  opacity: 0.9;
+}
+
+.username {
+  font-weight: bold;
+  color: #0f3460; /* Deep Blue */
+}
+
+/* Welcome Section */
+.welcomeSection {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.welcomeText {
+  font-size: 18px;
+  color: #1a1a1a; /* Dark Gray */
+}
+
+.userName {
+  font-weight: bold;
+  color: #0f3460; /* Deep Blue */
+}
+
+.eventSummary {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333333; /* Medium Gray */
+}
+
+.eventSummary strong {
+  color: #0f3460; /* Deep Blue */
+}
+
+/* Upcoming Events */
+.upcomingEvents {
+  margin-bottom: 20px;
+}
+
+.upcomingEvents h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #1a1a1a; /* Dark Gray */
+}
+
+.eventGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
+  gap: 20px; /* Spacing between cards */
+}
+
+.eventCard {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.12);
+  border-left: 5px solid #0f3460; /* Deep Blue */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.eventCard:hover {
+  transform: translateY(-5px); /* Lift card on hover */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.eventCard h3 {
+  font-size: 18px;
+  color: #1a1a1a; /* Dark Gray */
+  margin-bottom: 10px;
+}
+
+.eventCard p {
+  font-size: 14px;
+  color: #333333; /* Medium Gray */
+  margin: 5px 0;
+}
+
+.eventCard h4 {
+  font-size: 16px;
+  margin-top: 10px;
+  color: #1a1a1a; /* Dark Gray */
+}
+
+.participantsList {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 5px;
+}
+
+.participantsList li {
+  font-size: 14px;
+  padding: 5px;
+  background: #f8f9fa; /* Light Gray */
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.participantsList li strong {
+  color: #0f3460; /* Deep Blue */
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.joinButton {
+  background-color: #28a745; /* Green */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+  width: 100%; /* Full width button */
+}
+
+.joinButton:hover {
+  background-color: #218838; /* Darker Green */
+}
+
+.leaveButton {
+  background-color: #dc3545; /* Red */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+  width: 100%; /* Full width button */
+}
+
+.leaveButton:hover {
+  background-color: #b52b38; /* Darker Red */
+}
+
+.viewMore {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: #0f3460; /* Deep Blue */
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.viewMore:hover {
+  text-decoration: underline;
+}
+
+/* Notifications */
+.notifications {
+  margin-bottom: 20px;
+}
+
+.notifications h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #1a1a1a; /* Dark Gray */
+}
+
+.notificationList {
+  display: grid;
+  gap: 10px;
+}
+
+.notification {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #f8f9fa; /* Light Gray */
+  border-radius: 5px;
+}
+
+.notification p {
+  margin: 0;
+  font-size: 14px;
+  color: #333333; /* Medium Gray */
+}
+
+.markRead {
+  background-color: #ffc107; /* Yellow */
+  color: black;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.markRead:hover {
+  background-color: #e0a800; /* Darker Yellow */
+}
+
+.clearAll {
+  background-color: #dc3545; /* Red */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.clearAll:hover {
+  background-color: #b52b38; /* Darker Red */
+}
+
+/* Profile & Settings */
+.profileSettings {
+  margin-bottom: 20px;
+}
+
+.profileSettings h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #1a1a1a; /* Dark Gray */
+}
+
+.profileActions {
+  display: flex;
+  gap: 10px;
+}
+
+.viewProfile,
+.changePassword,
+.privacySettings,
+.darkModeToggle {
+  background-color: #0f3460; /* Deep Blue */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
+}
+
+.darkModeToggle {
+  background-color: #6c757d; /* Gray */
+}
+
+.viewProfile:hover,
+.changePassword:hover,
+.privacySettings:hover,
+.darkModeToggle:hover {
+  opacity: 0.9;
+}
+
+/* Insights */
+.insights {
+  margin-bottom: 20px;
+}
+
+.insights h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #1a1a1a; /* Dark Gray */
+}
+
+.insightsContent {
+  font-size: 14px;
+  color: #333333; /* Medium Gray */
+}
+
+/* Footer */
+.dashboardFooter {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 20px;
+  color: #333333; /* Medium Gray */
+}
+
+.socialLinks {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.socialLinks a {
+  color: #0f3460; /* Deep Blue */
+  text-decoration: none;
+}
+
+.socialLinks a:hover {
+  text-decoration: underline;
+}
+
+.contactSupport {
+  display: block;
+  margin-top: 10px;
+  color: #0f3460; /* Deep Blue */
+  text-decoration: none;
+}
+
+.contactSupport:hover {
+  text-decoration: underline;
+}

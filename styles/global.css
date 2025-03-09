@@ -1,0 +1,42 @@
+/* Reset or Normalize Default Browser Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Global Typography */
+body {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #1a1a1a; /* Dark Gray */
+  background-color: #f8f9fa; /* Light Gray */
+}
+
+a {
+  color: #0f3460; /* Deep Blue */
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Global Layout Styles */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Third-Party Library Overrides */
+/* Example: Overriding a library's button styles */
+.some-library-button {
+  background-color: #28a745; /* Green */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}

@@ -16,8 +16,10 @@ const DashboardPage = () => {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // State for hamburger menu
   const router = useRouter();
 
+  // Fetch user and events on component mount
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) {
@@ -58,6 +60,7 @@ const DashboardPage = () => {
     (event) => event.status === "Ended" || event.status === "Cancelled"
   ).length;
 
+  // Handle user sign-out
   const handleSignOut = async () => {
     try {
       await auth.signOut();
@@ -68,6 +71,7 @@ const DashboardPage = () => {
     }
   };
 
+  // Handle joining an event
   const handleJoinEvent = async (event) => {
     const user = auth.currentUser;
     if (!user) {
@@ -99,6 +103,7 @@ const DashboardPage = () => {
     }
   };
 
+  // Handle leaving an event
   const handleLeaveEvent = async (event) => {
     const user = auth.currentUser;
     if (!user) {
@@ -130,12 +135,20 @@ const DashboardPage = () => {
     }
   };
 
+  // Filter events based on search and category
   const filteredEvents = events.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
     const matchesSearch = search ? event.title?.toLowerCase().includes(search.toLowerCase()) : true;
     return matchesCategory && matchesSearch;
   });
 
+  // Toggle hamburger menu
+  const toggleMenu = () => {
+    console.log("Menu toggled:", !isMenuOpen);
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  // Show loading state
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -150,18 +163,39 @@ const DashboardPage = () => {
         {/* Header */}
         <header className={styles.dashboardHeader}>
           <h1 className={styles.dashboardTitle}>EventEase</h1>
-          <div className={styles.headerActions}>
+
+          {/* Hamburger Icon */}
+          <button
+            className={styles.hamburger}
+            onClick={toggleMenu}
+            aria-label="Toggle Menu"
+          >
+            <span className={styles.hamburgerLine}></span>
+            <span className={styles.hamburgerLine}></span>
+            <span className={styles.hamburgerLine}></span>
+          </button>
+
+          {/* Navigation Menu */}
+          <div
+            className={`${styles.headerActions} ${isMenuOpen ? styles.menuOpen : ""}`}
+            aria-hidden={!isMenuOpen}
+          >
+            {/* Search Bar */}
             <input
               type="text"
               placeholder="🔍 Search events..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className={styles.searchBar}
+              aria-label="Search events"
             />
+
+            {/* Category Filter Dropdown */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className={styles.filterButton}
+              aria-label="Filter by category"
             >
               <option value="">All Categories</option>
               {categories.map((category) => (
@@ -170,15 +204,27 @@ const DashboardPage = () => {
                 </option>
               ))}
             </select>
+
+            {/* Create Event Button */}
             <Link href="/create-event" passHref>
               <button className={styles.createEventButton}>🟢 Create Event</button>
             </Link>
+
+            {/* View All Events Button */}
             <Link href="/events" passHref>
               <button className={styles.viewEventsButton}>🔵 View All Events</button>
             </Link>
+
+            {/* Username */}
             <span className={styles.username}>{user.displayName || user.email}</span>
+
+            {/* Notifications Button */}
             <button className={styles.notificationsButton}>🔔(3)</button>
-            <button onClick={handleSignOut} className={styles.signOut}>🔓 Logout</button>
+
+            {/* Logout Button */}
+            <button onClick={handleSignOut} className={styles.signOut}>
+              🔓 Logout
+            </button>
           </div>
         </header>
 
