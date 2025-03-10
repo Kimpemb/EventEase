@@ -65,7 +65,6 @@ const DashboardPage = () => {
     try {
       await auth.signOut();
       router.replace("/signin");
-      window.location.reload();
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -151,6 +150,30 @@ const DashboardPage = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const mobileNav = document.querySelector(`.${styles.mobileNav}`);
+      const hamburger = document.querySelector(`.${styles.hamburger}`);
+
+      // Check if the click is outside the mobileNav and hamburger
+      if (
+        isMenuOpen &&
+        mobileNav &&
+        !mobileNav.contains(e.target) &&
+        !hamburger.contains(e.target)
+      ) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    // Attach the event listener
+    document.addEventListener("click", handleClickOutside);
+
+    // Cleanup the event listener
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [isMenuOpen]);
+
   // Show loading state
   if (loading) {
     return (
@@ -163,122 +186,107 @@ const DashboardPage = () => {
   return (
     <div className={styles.dashboardContainer}>
       <div className={styles.dashboardPanel}>
-      {/* Header */}
-<header className={styles.dashboardHeader}>
-  <h1 className={styles.dashboardTitle}>EventEase</h1>
+        <header className={styles.dashboardHeader}>
+          <h1 className={styles.dashboardTitle}>EventEase</h1>
 
-  {/* Desktop Navigation */}
-  <div className={styles.desktopNav}>
-    {/* Search Bar */}
-    <input
-      type="text"
-      placeholder="🔍 Search events..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className={styles.searchBar}
-      aria-label="Search events"
-    />
+          {/* Desktop Navigation */}
+          <div className={styles.desktopNav}>
+            <input
+              type="text"
+              placeholder="🔍 Search events..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={styles.searchBar}
+              aria-label="Search events"
+            />
 
-    {/* Category Filter Dropdown */}
-    <select
-      value={selectedCategory}
-      onChange={(e) => setSelectedCategory(e.target.value)}
-      className={styles.filterButton}
-      aria-label="Filter by category"
-    >
-      <option value="">All Categories</option>
-      {categories.map((category) => (
-        <option key={category} value={category}>
-          {category}
-        </option>
-      ))}
-    </select>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className={styles.filterButton}
+              aria-label="Filter by category"
+            >
+              <option value="">All Categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
 
-    {/* Create Event Button */}
-    <Link href="/create-event" passHref>
-      <button className={styles.menuButton}>Create Event</button>
-    </Link>
+            <Link href="/create-event" passHref>
+              <button className={styles.menuButton}>Create Event</button>
+            </Link>
 
-    {/* View All Events Button */}
-    <Link href="/events" passHref>
-      <button className={styles.menuButton}>View All Events</button>
-    </Link>
+            <Link href="/events" passHref>
+              <button className={styles.menuButton}>View All Events</button>
+            </Link>
 
-    {/* Username */}
-    <span className={styles.username}>{user.displayName || user.email}</span>
+            <span className={styles.username}>{user.displayName || user.email}</span>
 
-    {/* Notifications Button */}
-    <button className={styles.menuButton}>Notifications (3)</button>
+            <button className={styles.menuButton}>Notifications (3)</button>
 
-    {/* Logout Button */}
-    <button onClick={handleSignOut} className={styles.menuButton}>
-      Logout
-    </button>
-  </div>
+            <button onClick={handleSignOut} className={styles.menuButton}>
+              Logout
+            </button>
+          </div>
 
-  {/* Hamburger Icon - Mobile Only */}
-  <button
-    className={styles.hamburger}
-    onClick={toggleMenu}
-    aria-label="Toggle Menu"
-  >
-    <span className={styles.hamburgerLine}></span>
-    <span className={styles.hamburgerLine}></span>
-    <span className={styles.hamburgerLine}></span>
-  </button>
+          {/* Hamburger Icon - Mobile Only */}
+          <button
+            className={styles.hamburger}
+            onClick={toggleMenu}
+            aria-label="Toggle Menu"
+          >
+            <span className={styles.hamburgerLine}></span>
+            <span className={styles.hamburgerLine}></span>
+            <span className={styles.hamburgerLine}></span>
+          </button>
 
-  {/* Mobile Navigation Menu */}
-  <div
-    className={`${styles.mobileNav} ${isMenuOpen ? styles.menuOpen : ""}`}
-    aria-hidden={!isMenuOpen}
-  >
-    {/* Search Bar */}
-    <input
-      type="text"
-      placeholder="🔍 Search events..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className={styles.searchBar}
-      aria-label="Search events"
-    />
+          {/* Mobile Navigation Menu */}
+          <div
+            className={`${styles.mobileNav} ${isMenuOpen ? styles.menuOpen : ""}`}
+            aria-hidden={!isMenuOpen}
+          >
+            <input
+              type="text"
+              placeholder="🔍 Search events..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={styles.searchBar}
+              aria-label="Search events"
+            />
 
-    {/* Category Filter Dropdown */}
-    <select
-      value={selectedCategory}
-      onChange={(e) => setSelectedCategory(e.target.value)}
-      className={styles.filterButton}
-      aria-label="Filter by category"
-    >
-      <option value="">All Categories</option>
-      {categories.map((category) => (
-        <option key={category} value={category}>
-          {category}
-        </option>
-      ))}
-    </select>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className={styles.filterButton}
+              aria-label="Filter by category"
+            >
+              <option value="">All Categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
 
-    {/* Create Event Button */}
-    <Link href="/create-event" passHref>
-      <button className={styles.menuButton}>Create Event</button>
-    </Link>
+            <Link href="/create-event" passHref>
+              <button className={styles.menuButton}>Create Event</button>
+            </Link>
 
-    {/* View All Events Button */}
-    <Link href="/events" passHref>
-      <button className={styles.menuButton}>View All Events</button>
-    </Link>
+            <Link href="/events" passHref>
+              <button className={styles.menuButton}>View All Events</button>
+            </Link>
 
-    {/* Username */}
-    <span className={styles.username}>{user.displayName || user.email}</span>
+            <span className={styles.username}>{user.displayName || user.email}</span>
 
-    {/* Notifications Button */}
-    <button className={styles.menuButton}>Notifications (3)</button>
+            <button className={styles.menuButton}>Notifications (3)</button>
 
-    {/* Logout Button */}
-    <button onClick={handleSignOut} className={styles.menuButton}>
-      Logout
-    </button>
-  </div>
-</header>
+            <button onClick={handleSignOut} className={styles.menuButton}>
+              Logout
+            </button>
+          </div>
+        </header>
 
         {/* Welcome Section */}
         <section className={styles.welcomeSection}>
