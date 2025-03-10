@@ -38,6 +38,27 @@
   gap: 10px;
 }
 
+/* Create Event Button (+ Button) */
+.createEventButton {
+  background-color: #28a745; /* Green */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 50%; /* Circular button */
+  cursor: pointer;
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.createEventButton:hover {
+  background-color: #218838; /* Darker Green */
+}
+
 /* Hamburger Icon */
 .hamburger {
   display: none; /* Hidden by default */
@@ -93,7 +114,6 @@
   /* Ensure full-width elements in the menu */
   .searchBar,
   .filterButton,
-  .createEventButton,
   .viewEventsButton,
   .notificationsButton,
   .signOut {
@@ -126,13 +146,12 @@
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 14px;
-  width: 200px; /* Fixed width for search bar */
-  flex: 1; /* Allow search bar to grow */
+  width: 100%; /* Full width for search bar */
+  margin-top: 10px; /* Space below the header */
 }
 
 /* Buttons */
 .filterButton,
-.createEventButton,
 .viewEventsButton,
 .notificationsButton,
 .signOut {
@@ -150,10 +169,6 @@
   background-color: #6c757d; /* Gray */
 }
 
-.createEventButton {
-  background-color: #28a745; /* Green */
-}
-
 .viewEventsButton {
   background-color: #0f3460; /* Deep Blue */
 }
@@ -168,7 +183,6 @@
 }
 
 .filterButton:hover,
-.createEventButton:hover,
 .viewEventsButton:hover,
 .notificationsButton:hover,
 .signOut:hover {

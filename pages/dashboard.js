@@ -168,6 +168,11 @@ const DashboardPage = () => {
         <header className={styles.dashboardHeader}>
           <h1 className={styles.dashboardTitle}>EventEase</h1>
 
+          {/* Create Event Button (+ Button) */}
+          <Link href="/create-event" passHref>
+            <button className={styles.createEventButton}>+</button>
+          </Link>
+
           {/* Hamburger Icon */}
           <button
             className={styles.hamburger}
@@ -179,21 +184,21 @@ const DashboardPage = () => {
             <span className={styles.hamburgerLine}></span>
           </button>
 
+          {/* Search Bar */}
+          <input
+            type="text"
+            placeholder="🔍 Search events..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={styles.searchBar}
+            aria-label="Search events"
+          />
+
           {/* Navigation Menu */}
           <div
             className={`${styles.headerActions} ${isMenuOpen ? styles.menuOpen : ""}`}
             aria-hidden={!isMenuOpen}
           >
-            {/* Search Bar */}
-            <input
-              type="text"
-              placeholder="🔍 Search events..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={styles.searchBar}
-              aria-label="Search events"
-            />
-
             {/* Category Filter Dropdown */}
             <select
               value={selectedCategory}
@@ -208,11 +213,6 @@ const DashboardPage = () => {
                 </option>
               ))}
             </select>
-
-            {/* Create Event Button */}
-            <Link href="/create-event" passHref>
-              <button className={styles.createEventButton}>🟢 Create Event</button>
-            </Link>
 
             {/* View All Events Button */}
             <Link href="/events" passHref>
