@@ -29,7 +29,7 @@
 .dashboardTitle {
   font-size: 24px;
   font-weight: bold;
-  color: #1a1a1a; /* Dark Gray */
+  color: #1a1a1a;
 }
 
 .headerActions {
@@ -61,7 +61,7 @@
 
 /* Hamburger Icon */
 .hamburger {
-  display: none; /* Hidden by default */
+  display: none;
   flex-direction: column;
   justify-content: space-around;
   width: 30px;
@@ -70,13 +70,13 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  z-index: 1000; /* Ensure it's above other elements */
+  z-index: 1000;
 }
 
 .hamburgerLine {
   width: 100%;
   height: 3px;
-  background: #0f3460; /* Deep Blue */
+  background: #1a1a1a;
   border-radius: 2px;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
@@ -84,12 +84,12 @@
 /* Mobile Menu Styles */
 @media (max-width: 768px) {
   .hamburger {
-    display: flex; /* Show hamburger on mobile */
+    display: flex;
   }
 
   .headerActions {
-    position: fixed; /* Fixed position for better mobile usability */
-    top: 70px; /* Adjust based on header height */
+    position: fixed;
+    top: 70px;
     right: 20px;
     background: white;
     border-radius: 8px;
@@ -102,18 +102,18 @@
     overflow: hidden;
     transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
     opacity: 0;
-    visibility: hidden; /* Hide menu by default */
+    visibility: hidden;
   }
 
   .headerActions.menuOpen {
-    max-height: 400px; /* Adjust based on content */
+    max-height: 400px;
     opacity: 1;
-    visibility: visible; /* Show menu when open */
+    visibility: visible;
   }
 
-  /* Ensure full-width elements in the menu */
   .searchBar,
   .filterButton,
+  .createEventButton,
   .viewEventsButton,
   .notificationsButton,
   .signOut {
@@ -121,7 +121,6 @@
     text-align: center;
   }
 
-  /* Optional: Add a backdrop for better UX */
   .headerActions::before {
     content: "";
     position: fixed;
@@ -129,14 +128,14 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
-    z-index: -1; /* Place behind the menu */
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
     opacity: 0;
     transition: opacity 0.3s ease;
   }
 
   .headerActions.menuOpen::before {
-    opacity: 1; /* Show backdrop when menu is open */
+    opacity: 1;
   }
 }
 
@@ -146,12 +145,13 @@
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 14px;
-  width: 100%; /* Full width for search bar */
-  margin-top: 10px; /* Space below the header */
+  width: 200px; /* Fixed width for search bar */
+  flex: 1; /* Allow search bar to grow */
 }
 
 /* Buttons */
 .filterButton,
+.createEventButton,
 .viewEventsButton,
 .notificationsButton,
 .signOut {
@@ -159,14 +159,16 @@
   color: white;
   border: none;
   padding: 8px 12px;
-  border-radius: 5px;
+  text-align: left;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.3s ease;
+  color: #1a1a1a;
+  transition: background-color 0.3s ease;
+  position: relative;
 }
 
-.filterButton {
-  background-color: #6c757d; /* Gray */
+.createEventButton {
+  background-color: #28a745; /* Green */
 }
 
 .viewEventsButton {
@@ -183,16 +185,50 @@
 }
 
 .filterButton:hover,
+.createEventButton:hover,
 .viewEventsButton:hover,
 .notificationsButton:hover,
 .signOut:hover {
   opacity: 0.9;
 }
 
+/* Username */
 .username {
   font-weight: bold;
-  color: #0f3460; /* Deep Blue */
+  color: #1a1a1a;
 }
+
+/* All Categories Dropdown */
+.filterButton {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  width: 160px;
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+  font-size: 14px;
+  color: #1a1a1a; /* Dark Gray */
+}
+
+.filterButton:hover {
+  background-color: #e0e0e0;
+  border-color: #bbb;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.filterButton:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.filterButton option {
+  padding: 8px;
+  background-color: white;
+  color: #1a1a1a;
+}
+
 
 /* Welcome Section */
 .welcomeSection {
@@ -207,7 +243,7 @@
 
 .userName {
   font-weight: bold;
-  color: #0f3460; /* Deep Blue */
+  color: #1a1a1a; /* Dark Gray */
 }
 
 .eventSummary {
@@ -219,7 +255,7 @@
 }
 
 .eventSummary strong {
-  color: #0f3460; /* Deep Blue */
+  color: #1a1a1a; /* Dark Gray */
 }
 
 /* Upcoming Events */
@@ -244,7 +280,7 @@
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.12);
-  border-left: 5px solid #0f3460; /* Deep Blue */
+  border-left: 5px solid #1a1a1a; /* Dark Gray */
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -286,7 +322,7 @@
 }
 
 .participantsList li strong {
-  color: #0f3460; /* Deep Blue */
+  color: #1a1a1a; /* Dark Gray */
 }
 
 .buttonContainer {
@@ -296,42 +332,42 @@
 }
 
 .joinButton {
-  background-color: #28a745; /* Green */
-  color: white;
-  border: none;
+  background-color: transparent;
+  border: 1px solid #1a1a1a; /* Dark Gray */
+  color: #1a1a1a; /* Dark Gray */
   padding: 8px 12px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease;
   width: 100%; /* Full width button */
 }
 
 .joinButton:hover {
-  background-color: #218838; /* Darker Green */
+  background-color: rgba(0, 0, 0, 0.05); /* Subtle hover effect */
 }
 
 .leaveButton {
-  background-color: #dc3545; /* Red */
-  color: white;
-  border: none;
+  background-color: transparent;
+  border: 1px solid #dc3545; /* Red */
+  color: #dc3545; /* Red */
   padding: 8px 12px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease;
   width: 100%; /* Full width button */
 }
 
 .leaveButton:hover {
-  background-color: #b52b38; /* Darker Red */
+  background-color: rgba(220, 53, 69, 0.05); /* Subtle hover effect */
 }
 
 .viewMore {
   display: block;
   text-align: center;
   margin-top: 20px;
-  color: #0f3460; /* Deep Blue */
+  color: #1a1a1a; /* Dark Gray */
   text-decoration: none;
   font-size: 14px;
 }
@@ -372,23 +408,23 @@
 }
 
 .markRead {
-  background-color: #ffc107; /* Yellow */
-  color: black;
-  border: none;
+  background-color: transparent;
+  border: 1px solid #1a1a1a; /* Dark Gray */
+  color: #1a1a1a; /* Dark Gray */
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
 .markRead:hover {
-  background-color: #e0a800; /* Darker Yellow */
+  background-color: rgba(0, 0, 0, 0.05); /* Subtle hover effect */
 }
 
 .clearAll {
-  background-color: #dc3545; /* Red */
-  color: white;
-  border: none;
+  background-color: transparent;
+  border: 1px solid #dc3545; /* Red */
+  color: #dc3545; /* Red */
   padding: 5px 10px;
   border-radius: 5px;
   cursor: pointer;
@@ -396,7 +432,7 @@
 }
 
 .clearAll:hover {
-  background-color: #b52b38; /* Darker Red */
+  background-color: rgba(220, 53, 69, 0.05); /* Subtle hover effect */
 }
 
 /* Profile & Settings */
@@ -419,25 +455,26 @@
 .changePassword,
 .privacySettings,
 .darkModeToggle {
-  background-color: #0f3460; /* Deep Blue */
-  color: white;
-  border: none;
+  background-color: transparent;
+  border: 1px solid #1a1a1a; /* Dark Gray */
+  color: #1a1a1a; /* Dark Gray */
   padding: 8px 12px;
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
 .darkModeToggle {
-  background-color: #6c757d; /* Gray */
+  border-color: #6c757d; /* Gray */
+  color: #6c757d; /* Gray */
 }
 
 .viewProfile:hover,
 .changePassword:hover,
 .privacySettings:hover,
 .darkModeToggle:hover {
-  opacity: 0.9;
+  background-color: rgba(0, 0, 0, 0.05); /* Subtle hover effect */
 }
 
 /* Insights */
@@ -472,7 +509,7 @@
 }
 
 .socialLinks a {
-  color: #0f3460; /* Deep Blue */
+  color: #1a1a1a; /* Dark Gray */
   text-decoration: none;
 }
 
@@ -483,7 +520,7 @@
 .contactSupport {
   display: block;
   margin-top: 10px;
-  color: #0f3460; /* Deep Blue */
+  color: #1a1a1a; /* Dark Gray */
   text-decoration: none;
 }
 

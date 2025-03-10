@@ -148,7 +148,6 @@ const DashboardPage = () => {
 
   // Toggle hamburger menu
   const toggleMenu = () => {
-    console.log("Menu toggled:", !isMenuOpen);
     setIsMenuOpen(!isMenuOpen);
   };
 
@@ -214,20 +213,28 @@ const DashboardPage = () => {
               ))}
             </select>
 
+<<<<<<< HEAD
+=======
+            {/* Create Event Button */}
+            <Link href="/create-event" passHref>
+              <button className={styles.menuButton}>Create Event</button>
+            </Link>
+
+>>>>>>> e63d3a0 (Reverted back to previous design, with header buttons within the hamburger icon)
             {/* View All Events Button */}
             <Link href="/events" passHref>
-              <button className={styles.viewEventsButton}>🔵 View All Events</button>
+              <button className={styles.menuButton}>View All Events</button>
             </Link>
 
             {/* Username */}
             <span className={styles.username}>{user.displayName || user.email}</span>
 
             {/* Notifications Button */}
-            <button className={styles.notificationsButton}>🔔(3)</button>
+            <button className={styles.menuButton}>Notifications (3)</button>
 
             {/* Logout Button */}
-            <button onClick={handleSignOut} className={styles.signOut}>
-              🔓 Logout
+            <button onClick={handleSignOut} className={styles.menuButton}>
+              Logout
             </button>
           </div>
         </header>
@@ -328,10 +335,10 @@ const DashboardPage = () => {
         <section className={styles.profileSettings}>
           <h2>👤 Profile & Settings</h2>
           <div className={styles.profileActions}>
-            <button className={styles.viewProfile}>🖋️ Edit Profile</button>
-            <button className={styles.changePassword}>🔒 Change Password</button>
-            <button className={styles.privacySettings}>🛡️ Privacy Settings</button>
-            <button className={styles.darkModeToggle}>🌙 Dark Mode</button>
+            <button className={styles.menuButton}>Edit Profile</button>
+            <button className={styles.menuButton}>Change Password</button>
+            <button className={styles.menuButton}>Privacy Settings</button>
+            <button className={styles.menuButton}>Dark Mode</button>
           </div>
         </section>
 
