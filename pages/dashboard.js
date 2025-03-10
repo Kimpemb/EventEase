@@ -163,78 +163,122 @@ const DashboardPage = () => {
   return (
     <div className={styles.dashboardContainer}>
       <div className={styles.dashboardPanel}>
-        {/* Header */}
-        <header className={styles.dashboardHeader}>
-          <h1 className={styles.dashboardTitle}>EventEase</h1>
+      {/* Header */}
+<header className={styles.dashboardHeader}>
+  <h1 className={styles.dashboardTitle}>EventEase</h1>
 
-          {/* Create Event Button (+ Button) */}
-          <Link href="/create-event" passHref>
-            <button className={styles.createEventButton}>+</button>
-          </Link>
+  {/* Desktop Navigation */}
+  <div className={styles.desktopNav}>
+    {/* Search Bar */}
+    <input
+      type="text"
+      placeholder="🔍 Search events..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      className={styles.searchBar}
+      aria-label="Search events"
+    />
 
-          {/* Hamburger Icon */}
-          <button
-            className={styles.hamburger}
-            onClick={toggleMenu}
-            aria-label="Toggle Menu"
-          >
-            <span className={styles.hamburgerLine}></span>
-            <span className={styles.hamburgerLine}></span>
-            <span className={styles.hamburgerLine}></span>
-          </button>
+    {/* Category Filter Dropdown */}
+    <select
+      value={selectedCategory}
+      onChange={(e) => setSelectedCategory(e.target.value)}
+      className={styles.filterButton}
+      aria-label="Filter by category"
+    >
+      <option value="">All Categories</option>
+      {categories.map((category) => (
+        <option key={category} value={category}>
+          {category}
+        </option>
+      ))}
+    </select>
 
-          {/* Search Bar */}
-          <input
-            type="text"
-            placeholder="🔍 Search events..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={styles.searchBar}
-            aria-label="Search events"
-          />
+    {/* Create Event Button */}
+    <Link href="/create-event" passHref>
+      <button className={styles.menuButton}>Create Event</button>
+    </Link>
 
-          {/* Navigation Menu */}
-          <div
-            className={`${styles.headerActions} ${isMenuOpen ? styles.menuOpen : ""}`}
-            aria-hidden={!isMenuOpen}
-          >
-            {/* Category Filter Dropdown */}
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className={styles.filterButton}
-              aria-label="Filter by category"
-            >
-              <option value="">All Categories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+    {/* View All Events Button */}
+    <Link href="/events" passHref>
+      <button className={styles.menuButton}>View All Events</button>
+    </Link>
 
-            {/* Create Event Button */}
-            <Link href="/create-event" passHref>
-              <button className={styles.menuButton}>Create Event</button>
-            </Link>
+    {/* Username */}
+    <span className={styles.username}>{user.displayName || user.email}</span>
 
-            {/* View All Events Button */}
-            <Link href="/events" passHref>
-              <button className={styles.menuButton}>View All Events</button>
-            </Link>
+    {/* Notifications Button */}
+    <button className={styles.menuButton}>Notifications (3)</button>
 
-            {/* Username */}
-            <span className={styles.username}>{user.displayName || user.email}</span>
+    {/* Logout Button */}
+    <button onClick={handleSignOut} className={styles.menuButton}>
+      Logout
+    </button>
+  </div>
 
-            {/* Notifications Button */}
-            <button className={styles.menuButton}>Notifications (3)</button>
+  {/* Hamburger Icon - Mobile Only */}
+  <button
+    className={styles.hamburger}
+    onClick={toggleMenu}
+    aria-label="Toggle Menu"
+  >
+    <span className={styles.hamburgerLine}></span>
+    <span className={styles.hamburgerLine}></span>
+    <span className={styles.hamburgerLine}></span>
+  </button>
 
-            {/* Logout Button */}
-            <button onClick={handleSignOut} className={styles.menuButton}>
-              Logout
-            </button>
-          </div>
-        </header>
+  {/* Mobile Navigation Menu */}
+  <div
+    className={`${styles.mobileNav} ${isMenuOpen ? styles.menuOpen : ""}`}
+    aria-hidden={!isMenuOpen}
+  >
+    {/* Search Bar */}
+    <input
+      type="text"
+      placeholder="🔍 Search events..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      className={styles.searchBar}
+      aria-label="Search events"
+    />
+
+    {/* Category Filter Dropdown */}
+    <select
+      value={selectedCategory}
+      onChange={(e) => setSelectedCategory(e.target.value)}
+      className={styles.filterButton}
+      aria-label="Filter by category"
+    >
+      <option value="">All Categories</option>
+      {categories.map((category) => (
+        <option key={category} value={category}>
+          {category}
+        </option>
+      ))}
+    </select>
+
+    {/* Create Event Button */}
+    <Link href="/create-event" passHref>
+      <button className={styles.menuButton}>Create Event</button>
+    </Link>
+
+    {/* View All Events Button */}
+    <Link href="/events" passHref>
+      <button className={styles.menuButton}>View All Events</button>
+    </Link>
+
+    {/* Username */}
+    <span className={styles.username}>{user.displayName || user.email}</span>
+
+    {/* Notifications Button */}
+    <button className={styles.menuButton}>Notifications (3)</button>
+
+    {/* Logout Button */}
+    <button onClick={handleSignOut} className={styles.menuButton}>
+      Logout
+    </button>
+  </div>
+</header>
 
         {/* Welcome Section */}
         <section className={styles.welcomeSection}>

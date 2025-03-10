@@ -24,6 +24,9 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  background-color: transparent;
+  padding: 10px 0;
+  position: relative;
 }
 
 .dashboardTitle {
@@ -32,96 +35,142 @@
   color: #1a1a1a;
 }
 
-.headerActions {
+/* Desktop Navigation */
+.desktopNav {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
 }
 
-/* Create Event Button (+ Button) */
-.createEventButton {
-  background-color: #28a745; /* Green */
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 50%; /* Circular button */
-  cursor: pointer;
-  font-size: 18px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s ease;
+/* Mobile Navigation */
+.mobileNav {
+  display: none;
 }
 
-.createEventButton:hover {
-  background-color: #218838; /* Darker Green */
-}
-
-/* Hamburger Icon */
+/* Hamburger Icon - Hidden on Desktop */
 .hamburger {
   display: none;
-  flex-direction: column;
-  justify-content: space-around;
-  width: 30px;
-  height: 24px;
-  background: transparent;
+}
+
+/* Menu Buttons */
+.menuButton {
+  background-color: transparent;
+  color: #1a1a1a;
   border: none;
+  padding: 8px 0;
   cursor: pointer;
-  padding: 0;
-  z-index: 1000;
+  font-size: 16px;
+  position: relative;
 }
 
-.hamburgerLine {
+.menuButton:hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
   width: 100%;
-  height: 3px;
-  background: #1a1a1a;
-  border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  height: 2px;
+  background-color: #1a1a1a;
 }
 
-/* Mobile Menu Styles */
+/* Search Bar */
+.searchBar {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  width: 200px;
+  background-color: transparent;
+}
+
+.searchBar:hover {
+  border-color: #1a1a1a;
+}
+
+/* Filter Button */
+.filterButton {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: transparent;
+  cursor: pointer;
+  width: 160px;
+  font-size: 14px;
+  color: #1a1a1a;
+}
+
+.filterButton:hover {
+  border-color: #1a1a1a;
+}
+
+/* Username */
+.username {
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+/* Media Queries for Mobile */
 @media (max-width: 768px) {
+  .desktopNav {
+    display: none;
+  }
+  
   .hamburger {
     display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1000;
   }
-
-  .headerActions {
+  
+  .hamburgerLine {
+    width: 100%;
+    height: 3px;
+    background: #1a1a1a;
+    border-radius: 2px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .mobileNav {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
     position: fixed;
     top: 70px;
     right: 20px;
     background: white;
     border-radius: 8px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12);
-    flex-direction: column;
-    gap: 10px;
     padding: 15px;
-    width: 200px;
+    width: 250px;
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
     opacity: 0;
     visibility: hidden;
+    z-index: 1000;
   }
-
-  .headerActions.menuOpen {
-    max-height: 400px;
+  
+  .mobileNav.menuOpen {
+    max-height: 500px;
     opacity: 1;
     visibility: visible;
   }
-
-  .searchBar,
-  .filterButton,
-  .createEventButton,
-  .viewEventsButton,
-  .notificationsButton,
-  .signOut {
-    width: 100%; /* Full width on mobile */
-    text-align: center;
+  
+  .mobileNav .menuButton,
+  .mobileNav .searchBar,
+  .mobileNav .filterButton,
+  .mobileNav .username {
+    width: 100%;
   }
-
-  .headerActions::before {
+  
+  .mobileNav::before {
     content: "";
     position: fixed;
     top: 0;
@@ -132,103 +181,18 @@
     z-index: -1;
     opacity: 0;
     transition: opacity 0.3s ease;
+    visibility: hidden;
   }
-
-  .headerActions.menuOpen::before {
+  
+  .mobileNav.menuOpen::before {
     opacity: 1;
+    visibility: visible;
+  }
+  
+  .dashboardHeader {
+    padding: 10px;
   }
 }
-
-/* Search Bar */
-.searchBar {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 14px;
-  width: 200px; /* Fixed width for search bar */
-  flex: 1; /* Allow search bar to grow */
-}
-
-/* Buttons */
-.filterButton,
-.createEventButton,
-.viewEventsButton,
-.notificationsButton,
-.signOut {
-  background-color: #0f3460; /* Deep Blue */
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  text-align: left;
-  cursor: pointer;
-  font-size: 14px;
-  color: #1a1a1a;
-  transition: background-color 0.3s ease;
-  position: relative;
-}
-
-.createEventButton {
-  background-color: #28a745; /* Green */
-}
-
-.viewEventsButton {
-  background-color: #0f3460; /* Deep Blue */
-}
-
-.notificationsButton {
-  background-color: #ffc107; /* Yellow */
-  color: black;
-}
-
-.signOut {
-  background-color: #dc3545; /* Red */
-}
-
-.filterButton:hover,
-.createEventButton:hover,
-.viewEventsButton:hover,
-.notificationsButton:hover,
-.signOut:hover {
-  opacity: 0.9;
-}
-
-/* Username */
-.username {
-  font-weight: bold;
-  color: #1a1a1a;
-}
-
-/* All Categories Dropdown */
-.filterButton {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  width: 160px;
-  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
-  font-size: 14px;
-  color: #1a1a1a; /* Dark Gray */
-}
-
-.filterButton:hover {
-  background-color: #e0e0e0;
-  border-color: #bbb;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.filterButton:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-}
-
-.filterButton option {
-  padding: 8px;
-  background-color: white;
-  color: #1a1a1a;
-}
-
 
 /* Welcome Section */
 .welcomeSection {
