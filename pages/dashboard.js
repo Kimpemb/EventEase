@@ -213,14 +213,11 @@ const DashboardPage = () => {
               ))}
             </select>
 
-<<<<<<< HEAD
-=======
             {/* Create Event Button */}
             <Link href="/create-event" passHref>
               <button className={styles.menuButton}>Create Event</button>
             </Link>
 
->>>>>>> e63d3a0 (Reverted back to previous design, with header buttons within the hamburger icon)
             {/* View All Events Button */}
             <Link href="/events" passHref>
               <button className={styles.menuButton}>View All Events</button>
