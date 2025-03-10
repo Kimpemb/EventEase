@@ -135,12 +135,16 @@ const DashboardPage = () => {
     }
   };
 
-  // Filter events based on search and category
+  // Filter events based on search, category, and status
   const filteredEvents = events.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
     const matchesSearch = search ? event.title?.toLowerCase().includes(search.toLowerCase()) : true;
-    return matchesCategory && matchesSearch;
+    const isUpcoming = event.status === "Upcoming"; // Only include upcoming events
+    return matchesCategory && matchesSearch && isUpcoming;
   });
+
+  // Limit the number of displayed events to 3
+  const displayedEvents = filteredEvents.slice(0, 3);
 
   // Toggle hamburger menu
   const toggleMenu = () => {
@@ -245,11 +249,11 @@ const DashboardPage = () => {
           <h2>📅 Upcoming Events</h2>
           {error ? (
             <p className={styles.error}>{error}</p>
-          ) : filteredEvents.length === 0 ? (
-            <p>No events available.</p>
+          ) : displayedEvents.length === 0 ? (
+            <p>No upcoming events available.</p>
           ) : (
             <div className={styles.eventGrid}>
-              {filteredEvents.map((event) => (
+              {displayedEvents.map((event) => (
                 <div key={event.id} className={styles.eventCard}>
                   <h3>{event.title}</h3>
                   <p>Date: {event.date} | Time: {event.time}</p>
@@ -292,7 +296,9 @@ const DashboardPage = () => {
               ))}
             </div>
           )}
-          <a href="#" className={styles.viewMore}>View More...</a>
+          {filteredEvents.length > 3 && (
+            <a href="#" className={styles.viewMore}>View More...</a>
+          )}
         </section>
 
         {/* Notifications */}
