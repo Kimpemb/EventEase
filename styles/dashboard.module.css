@@ -44,40 +44,6 @@
 /* Mobile Navigation */
 .mobileNav {
   display: none;
-}
-
-/* Hamburger Icon - Hidden on Desktop */
-.hamburger {
-  display: none;
-}
-
-/* Hamburger Icon - Visible on Mobile */
-@media (max-width: 768px) {
-  .hamburger {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 30px;
-    height: 24px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    z-index: 1000;
-  }
-
-  .hamburgerLine {
-    width: 100%;
-    height: 3px;
-    background: #1a1a1a;
-    border-radius: 2px;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-  }
-}
-
-/* Mobile Navigation Menu */
-.mobileNav {
-  display: none;
   flex-direction: column;
   align-items: flex-start;
   gap: 15px;
@@ -104,48 +70,79 @@
   visibility: visible;
 }
 
-/* Backdrop for Mobile Menu */
-.mobileNav::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Semi-transparent backdrop */
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  visibility: hidden;
+/* Hamburger Icon - Hidden on Desktop */
+.hamburger {
+  display: none; /* Hidden by default */
 }
 
-/* Backdrop Visible When Menu is Open */
-.mobileNav.menuOpen::before {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Media Queries for Mobile */
+/* Hamburger Icon - Visible on Mobile */
 @media (max-width: 768px) {
+  .hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1000; /* Ensure it's above other elements */
+  }
+
+  .hamburgerLine {
+    width: 100%;
+    height: 3px;
+    background: #1a1a1a; /* Dark gray for visibility */
+    border-radius: 2px;
+    transition: transform 0.3s ease, opacity 0.3s ease; /* Smooth transitions */
+  }
+
+  /* Hide Desktop Navigation on Mobile */
   .desktopNav {
     display: none;
   }
 
+  /* Show Mobile Navigation on Mobile */
   .mobileNav {
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    padding: 15px;
+    width: 250px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1000;
+  }
+
+  /* Mobile Menu Open State */
+  .mobileNav.menuOpen {
+    max-height: 500px; /* Adjust based on content */
+    opacity: 1;
+    visibility: visible;
   }
 }
 
 /* Menu Buttons */
 .menuButton {
   background-color: transparent;
-  color: #1a1a1a;
+  color: #1a1a1a; /* Dark gray for readability */
   border: none;
   padding: 8px 0;
   cursor: pointer;
   font-size: 16px;
   position: relative;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease; /* Smooth color transition */
 }
 
 .menuButton:hover {
@@ -159,46 +156,46 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #1a1a1a;
-  transition: width 0.3s ease;
+  background-color: #1a1a1a; /* Underline effect */
+  transition: width 0.3s ease; /* Smooth underline transition */
 }
 
 /* Search Bar */
 .searchBar {
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #ddd; /* Light gray border */
   border-radius: 5px;
   font-size: 14px;
   width: 200px;
   background-color: transparent;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease; /* Smooth border transition */
 }
 
 .searchBar:hover {
-  border-color: #1a1a1a;
+  border-color: #1a1a1a; /* Darker border on hover */
 }
 
 /* Filter Button */
 .filterButton {
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #ddd; /* Light gray border */
   border-radius: 5px;
   background-color: transparent;
   cursor: pointer;
   width: 160px;
   font-size: 14px;
-  color: #1a1a1a;
-  transition: border-color 0.3s ease;
+  color: #1a1a1a; /* Dark gray for readability */
+  transition: border-color 0.3s ease; /* Smooth border transition */
 }
 
 .filterButton:hover {
-  border-color: #1a1a1a;
+  border-color: #1a1a1a; /* Darker border on hover */
 }
 
 /* Username */
 .username {
   font-weight: bold;
-  color: #1a1a1a;
+  color: #1a1a1a; /* Dark gray for readability */
 }
 
 /* Welcome Section */

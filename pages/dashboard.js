@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { auth } from "../firebase/firebaseConfig";
-import { getOrganizerEvents, getEventParticipants, joinEvent, leaveEvent } from "../firebase/firebaseEvents";
 import Link from "next/link";
+import { auth, db } from "../firebase/firebaseConfig"; // Import auth and db
+import { getOrganizerEvents, getEventParticipants, joinEvent, leaveEvent } from "../firebase/firebaseEvents";
+import { doc, deleteDoc } from "firebase/firestore"; // Import Firestore functions
 import styles from "../styles/dashboard.module.css";
 
 const categories = [
@@ -134,6 +135,20 @@ const DashboardPage = () => {
     }
   };
 
+  // Handle deleting an event
+  const handleDeleteEvent = async (eventId) => {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      try {
+        await deleteDoc(doc(db, "events", eventId)); // Delete event from Firestore
+        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId)); // Update UI
+        alert("Event deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting event:", error);
+        alert("Failed to delete event. Please try again.");
+      }
+    }
+  };
+
   // Filter events based on search, category, and status
   const filteredEvents = events.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
@@ -147,7 +162,7 @@ const DashboardPage = () => {
 
   // Toggle hamburger menu
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+    setIsMenuOpen((prev) => !prev); // Toggle the state
   };
 
   // Close menu when clicking outside
@@ -155,8 +170,8 @@ const DashboardPage = () => {
     const handleClickOutside = (e) => {
       const mobileNav = document.querySelector(`.${styles.mobileNav}`);
       const hamburger = document.querySelector(`.${styles.hamburger}`);
-
-      // Check if the click is outside the mobileNav and hamburger
+  
+      // Close the menu if the click is outside the menu and not on the hamburger icon
       if (
         isMenuOpen &&
         mobileNav &&
@@ -166,14 +181,14 @@ const DashboardPage = () => {
         setIsMenuOpen(false);
       }
     };
-
+  
     // Attach the event listener
     document.addEventListener("click", handleClickOutside);
-
+  
     // Cleanup the event listener
     return () => document.removeEventListener("click", handleClickOutside);
   }, [isMenuOpen]);
-
+  
   // Show loading state
   if (loading) {
     return (
@@ -346,6 +361,23 @@ const DashboardPage = () => {
                           Join Event
                         </button>
                       )}
+                    </div>
+                  )}
+                  {/* Add Edit and Delete Buttons */}
+                  {auth.currentUser && auth.currentUser.uid === event.userId && (
+                    <div className={styles.buttonContainer}>
+                      <button
+                        onClick={() => router.push(`/edit-event/${event.id}`)}
+                        className={styles.menuButton}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvent(event.id)}
+                        className={styles.leaveButton}
+                      >
+                        Delete
+                      </button>
                     </div>
                   )}
                 </div>
