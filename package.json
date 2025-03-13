@@ -11,7 +11,7 @@
   "dependencies": {
     "autoprefixer": "^10.4.21",
     "firebase": "^11.4.0",
-    "next": "15.2.1",
+    "next": "^15.2.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -24,5 +24,8 @@
     "eslint-config-next": "15.2.1",
     "mini-css-extract-plugin": "^2.9.2",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=19.0.0"
   }
 }
