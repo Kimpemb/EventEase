@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { auth, db } from "../firebase/firebaseConfig"; // Import auth and db
+import { auth, db } from "../firebase/firebaseConfig";
 import { getOrganizerEvents, getEventParticipants, joinEvent, leaveEvent } from "../firebase/firebaseEvents";
-import { doc, deleteDoc } from "firebase/firestore"; // Import Firestore functions
+import { doc, deleteDoc } from "firebase/firestore";
 import styles from "../styles/dashboard.module.css";
 
 const categories = [
@@ -170,7 +170,7 @@ const DashboardPage = () => {
     const handleClickOutside = (e) => {
       const mobileNav = document.querySelector(`.${styles.mobileNav}`);
       const hamburger = document.querySelector(`.${styles.hamburger}`);
-  
+
       // Close the menu if the click is outside the menu and not on the hamburger icon
       if (
         isMenuOpen &&
@@ -181,14 +181,14 @@ const DashboardPage = () => {
         setIsMenuOpen(false);
       }
     };
-  
+
     // Attach the event listener
     document.addEventListener("click", handleClickOutside);
-  
+
     // Cleanup the event listener
     return () => document.removeEventListener("click", handleClickOutside);
   }, [isMenuOpen]);
-  
+
   // Show loading state
   if (loading) {
     return (
@@ -367,7 +367,10 @@ const DashboardPage = () => {
                   {auth.currentUser && auth.currentUser.uid === event.userId && (
                     <div className={styles.buttonContainer}>
                       <button
-                        onClick={() => router.push(`/edit-event/${event.id}`)}
+                        onClick={() => {
+                          console.log("Edit Button Clicked - Event ID:", event.id); // Log the event ID
+                          router.push(`/edit-event/${event.id}`);
+                        }}
                         className={styles.menuButton}
                       >
                         Edit
