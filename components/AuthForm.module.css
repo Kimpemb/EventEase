@@ -1,0 +1,102 @@
+/* Authentication Form Container */
+.container {
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 24px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Title */
+.title {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #1f2937; /* Dark Grayish Black */
+}
+
+/* Form */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Input Fields */
+.input {
+    padding: 12px;
+    border: 1px solid #1f2937; /* Dark Grayish Black */
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input:focus {
+    border-color: #0f172a; /* Deep Blue */
+    box-shadow: 0 0 6px rgba(15, 23, 42, 0.4);
+    outline: none;
+}
+
+/* Button */
+.button {
+    padding: 12px;
+    background-color: #0f172a; /* Deep Blue */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.button:hover {
+    background-color: #1e293b; /* Slightly lighter Deep Blue */
+    transform: scale(1.02);
+}
+
+.button:disabled {
+    background-color: #6b7280; /* Dark Gray */
+    cursor: not-allowed;
+}
+
+/* Error & Success Messages */
+.error, .success {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.error {
+    color: #1f2937; /* Dark Grayish Black */
+    background-color: #f3f4f6; /* Light Gray Background */
+}
+
+.success {
+    color: #0f172a; /* Deep Blue */
+    background-color: #e0e7ff; /* Soft Blue Background */
+}
+
+/* Switch Text */
+.switchText {
+    font-size: 14px;
+    margin-top: 20px;
+    color: #1f2937; /* Dark Grayish Black */
+}
+
+/* Switch Link */
+.switchLink {
+    color: #0f172a; /* Deep Blue */
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.switchLink:hover {
+    text-decoration: underline;
+    color: #1e293b; /* Slightly lighter Deep Blue */
+}

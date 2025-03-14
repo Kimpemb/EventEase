@@ -1,0 +1,497 @@
+/* General Styles */
+.dashboardContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background-color: #f8f9fa; /* Light Gray */
+  min-height: 100vh;
+}
+
+.dashboardPanel {
+  width: 100%;
+  max-width: 1200px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  color: #1a1a1a; /* Dark Gray */
+}
+
+/* Header */
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px 0;
+  position: relative;
+}
+
+.dashboardTitle {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+/* Desktop Navigation */
+.desktopNav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Mobile Navigation */
+.mobileNav {
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  padding: 15px;
+  width: 250px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 1000;
+}
+
+/* Mobile Menu Open State */
+.mobileNav.menuOpen {
+  max-height: 500px;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Hamburger Icon - Hidden on Desktop */
+.hamburger {
+  display: none; /* Hidden by default */
+}
+
+/* Hamburger Icon - Visible on Mobile */
+@media (max-width: 768px) {
+  .hamburger {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1000; /* Ensure it's above other elements */
+  }
+
+  .hamburgerLine {
+    width: 100%;
+    height: 3px;
+    background: #1a1a1a; /* Dark gray for visibility */
+    border-radius: 2px;
+    transition: transform 0.3s ease, opacity 0.3s ease; /* Smooth transitions */
+  }
+
+  /* Hide Desktop Navigation on Mobile */
+  .desktopNav {
+    display: none;
+  }
+
+  /* Show Mobile Navigation on Mobile */
+  .mobileNav {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    padding: 15px;
+    width: 250px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1000;
+  }
+
+  /* Mobile Menu Open State */
+  .mobileNav.menuOpen {
+    max-height: 500px; /* Adjust based on content */
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Menu Buttons */
+.menuButton {
+  background-color: transparent;
+  color: #1a1a1a; /* Dark gray for readability */
+  border: none;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 16px;
+  position: relative;
+  transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.menuButton:hover {
+  color: #333333; /* Slightly darker on hover */
+}
+
+.menuButton:hover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #1a1a1a; /* Underline effect */
+  transition: width 0.3s ease; /* Smooth underline transition */
+}
+
+/* Search Bar */
+.searchBar {
+  padding: 8px 12px;
+  border: 1px solid #ddd; /* Light gray border */
+  border-radius: 5px;
+  font-size: 14px;
+  width: 200px;
+  background-color: transparent;
+  transition: border-color 0.3s ease; /* Smooth border transition */
+}
+
+.searchBar:hover {
+  border-color: #1a1a1a; /* Darker border on hover */
+}
+
+/* Filter Button */
+.filterButton {
+  padding: 8px 12px;
+  border: 1px solid #ddd; /* Light gray border */
+  border-radius: 5px;
+  background-color: transparent;
+  cursor: pointer;
+  width: 160px;
+  font-size: 14px;
+  color: #1a1a1a; /* Dark gray for readability */
+  transition: border-color 0.3s ease; /* Smooth border transition */
+}
+
+.filterButton:hover {
+  border-color: #1a1a1a; /* Darker border on hover */
+}
+
+/* Username */
+.username {
+  font-weight: bold;
+  color: #1a1a1a; /* Dark gray for readability */
+}
+
+/* Welcome Section */
+.welcomeSection {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.welcomeText {
+  font-size: 18px;
+  color: #1a1a1a;
+}
+
+.userName {
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.eventSummary {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333333;
+}
+
+.eventSummary strong {
+  color: #1a1a1a;
+}
+
+/* Upcoming Events */
+.upcomingEvents {
+  margin-bottom: 20px;
+}
+
+.upcomingEvents h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #1a1a1a;
+}
+
+.eventGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.eventCard {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+  border-left: 5px solid #1a1a1a;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.eventCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.eventCard h3 {
+  font-size: 18px;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+
+.eventCard p {
+  font-size: 14px;
+  color: #333333;
+  margin: 5px 0;
+}
+
+.eventCard h4 {
+  font-size: 16px;
+  margin-top: 10px;
+  color: #1a1a1a;
+}
+
+.participantsList {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 5px;
+}
+
+.participantsList li {
+  font-size: 14px;
+  padding: 5px;
+  background: #f8f9fa;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.participantsList li strong {
+  color: #1a1a1a;
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.joinButton {
+  background-color: transparent;
+  border: 1px solid #1a1a1a;
+  color: #1a1a1a;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+.joinButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.leaveButton {
+  background-color: transparent;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+.leaveButton:hover {
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+.viewMore {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: #1a1a1a;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.viewMore:hover {
+  text-decoration: underline;
+}
+
+/* Notifications */
+.notifications {
+  margin-bottom: 20px;
+}
+
+.notifications h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #1a1a1a;
+}
+
+.notificationList {
+  display: grid;
+  gap: 10px;
+}
+
+.notification {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+
+.notification p {
+  margin: 0;
+  font-size: 14px;
+  color: #333333;
+}
+
+.markRead {
+  background-color: transparent;
+  border: 1px solid #1a1a1a;
+  color: #1a1a1a;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.markRead:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.clearAll {
+  background-color: transparent;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.clearAll:hover {
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* Profile & Settings */
+.profileSettings {
+  margin-bottom: 20px;
+}
+
+.profileSettings h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #1a1a1a;
+}
+
+.profileActions {
+  display: flex;
+  gap: 10px;
+}
+
+.viewProfile,
+.changePassword,
+.privacySettings,
+.darkModeToggle {
+  background-color: transparent;
+  border: 1px solid #1a1a1a;
+  color: #1a1a1a;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.darkModeToggle {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.viewProfile:hover,
+.changePassword:hover,
+.privacySettings:hover,
+.darkModeToggle:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Insights */
+.insights {
+  margin-bottom: 20px;
+}
+
+.insights h2 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #1a1a1a;
+}
+
+.insightsContent {
+  font-size: 14px;
+  color: #333333;
+}
+
+/* Footer */
+.dashboardFooter {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 20px;
+  color: #333333;
+}
+
+.socialLinks {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.socialLinks a {
+  color: #1a1a1a;
+  text-decoration: none;
+}
+
+.socialLinks a:hover {
+  text-decoration: underline;
+}
+
+.contactSupport {
+  display: block;
+  margin-top: 10px;
+  color: #1a1a1a;
+  text-decoration: none;
+}
+
+.contactSupport:hover {
+  text-decoration: underline;
+}

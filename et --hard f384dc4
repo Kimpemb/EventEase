@@ -1,0 +1,15 @@
+[33m147b268[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/testing[m[33m)[m  Tried improving mobile responsiveness
+[33m5682ff7[m Improved dashboard even more, made it more user friendly and just much better
+[33mbc974f4[m Improved dashboard layout
+[33m85251c2[m  Added email validation to user signup/signin
+[33m20c215f[m  Made sure one cannot use ctrl + -> to bypass login after loggin out, included styling for leave button and made sure it works
+[33m519c384[m Add feature to leave event after joining
+[33m4f5620a[m Improved view events, included status, feature to prevent organizer from joining his own event, included start and end time of event
+[33mc7ae3c7[m Improved error handing in adding events
+[33m6442285[m Allowed users to join events and have the event organizers track participants, not fully developed yet, but meets mvp standards
+[33m070b058[m Improved event view
+[33m7234ce3[m Implemented search and filter for events view
+[33me443d90[m Update event view to display organizer usernames
+[33m3e18133[m Added login, signup, event viewing, and logout functionality
+[33med581ca[m Implement user authentication and registration with Firebase Auth
+[33m9e1d9dd[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/feature/integration[m[33m, [m[1;31morigin/feature/frontend[m[33m, [m[1;31morigin/feature/database[m[33m, [m[1;31morigin/feature/backend[m[33m, [m[1;31morigin/feature/authentication[m[33m, [m[1;31morigin/develop[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m, [m[1;32mfeature/setup[m[33m, [m[1;32mfeature/integration[m[33m, [m[1;32mfeature/frontend[m[33m, [m[1;32mfeature/database[m[33m, [m[1;32mfeature/backend[m[33m, [m[1;32mfeature/authentication[m[33m, [m[1;32mdevelop[m[33m)[m Initial commit
