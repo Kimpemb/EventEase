@@ -17,7 +17,7 @@ const DashboardPage = () => {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State for hamburger menu
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   // Fetch user and events on component mount
@@ -139,8 +139,8 @@ const DashboardPage = () => {
   const handleDeleteEvent = async (eventId) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
       try {
-        await deleteDoc(doc(db, "events", eventId)); // Delete event from Firestore
-        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId)); // Update UI
+        await deleteDoc(doc(db, "events", eventId));
+        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
         alert("Event deleted successfully!");
       } catch (error) {
         console.error("Error deleting event:", error);
@@ -153,7 +153,7 @@ const DashboardPage = () => {
   const filteredEvents = events.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
     const matchesSearch = search ? event.title?.toLowerCase().includes(search.toLowerCase()) : true;
-    const isUpcoming = event.status === "Upcoming"; // Only include upcoming events
+    const isUpcoming = event.status === "Upcoming";
     return matchesCategory && matchesSearch && isUpcoming;
   });
 
@@ -162,7 +162,7 @@ const DashboardPage = () => {
 
   // Toggle hamburger menu
   const toggleMenu = () => {
-    setIsMenuOpen((prev) => !prev); // Toggle the state
+    setIsMenuOpen((prev) => !prev);
   };
 
   // Close menu when clicking outside
@@ -171,7 +171,6 @@ const DashboardPage = () => {
       const mobileNav = document.querySelector(`.${styles.mobileNav}`);
       const hamburger = document.querySelector(`.${styles.hamburger}`);
 
-      // Close the menu if the click is outside the menu and not on the hamburger icon
       if (
         isMenuOpen &&
         mobileNav &&
@@ -182,10 +181,7 @@ const DashboardPage = () => {
       }
     };
 
-    // Attach the event listener
     document.addEventListener("click", handleClickOutside);
-
-    // Cleanup the event listener
     return () => document.removeEventListener("click", handleClickOutside);
   }, [isMenuOpen]);
 
@@ -327,7 +323,7 @@ const DashboardPage = () => {
               {displayedEvents.map((event) => (
                 <div key={event.id} className={styles.eventCard}>
                   <h3>{event.title}</h3>
-                  <p>Date: {event.date} | Time: {event.time}</p>
+                  <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
                   <p>Location: {event.location}</p>
                   <p>Category: {event.category || "Uncategorized"}</p>
                   <p>Organizer: {event.organizer || "Unknown"}</p>
@@ -363,14 +359,10 @@ const DashboardPage = () => {
                       )}
                     </div>
                   )}
-                  {/* Add Edit and Delete Buttons */}
                   {auth.currentUser && auth.currentUser.uid === event.userId && (
                     <div className={styles.buttonContainer}>
                       <button
-                        onClick={() => {
-                          console.log("Edit Button Clicked - Event ID:", event.id); // Log the event ID
-                          router.push(`/edit-event/${event.id}`);
-                        }}
+                        onClick={() => router.push(`/edit-event/${event.id}`)}
                         className={styles.menuButton}
                       >
                         Edit
