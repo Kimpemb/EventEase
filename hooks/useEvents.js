@@ -1,24 +1,37 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getEvents, joinEvent, leaveEvent, getEventParticipants } from "../firebase/firebaseEvents";
-import { auth } from "../firebase/firebaseConfig";
+import { auth, db } from "../firebase/firebaseConfig";
+import { collection, onSnapshot } from "firebase/firestore";
 
 export const useEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch events from Firebase
-  const fetchEvents = async () => {
+  // Helper function to determine event status
+  const getEventStatus = (eventDate, startTime, endTime) => {
+    const now = new Date();
+    const eventStart = new Date(`${eventDate} ${startTime}`);
+    const eventEnd = new Date(`${eventDate} ${endTime}`);
+
+    if (now >= eventEnd) return "Ended";
+    if (now >= eventStart) return "Ongoing";
+    return "Upcoming";
+  };
+
+  // Fetch events and their participants
+  const fetchEvents = useCallback(async () => {
     try {
       const eventsList = await getEvents();
       const updatedEvents = await Promise.all(
         eventsList.map(async (event) => {
           try {
             const participants = await getEventParticipants(event.id);
-            return { ...event, participants };
+            const status = getEventStatus(event.date, event.startTime, event.endTime);
+            return { ...event, participants, status };
           } catch (participantError) {
             console.error("Error fetching participants for event:", event.id, participantError);
-            return { ...event, participants: [] }; // Fallback to empty array if participants fetch fails
+            return { ...event, participants: [], status: "Upcoming" }; // Fallback
           }
         })
       );
@@ -29,7 +42,7 @@ export const useEvents = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Handle joining an event
   const handleJoinEvent = async (eventId) => {
@@ -40,7 +53,7 @@ export const useEvents = () => {
     }
 
     try {
-      await joinEvent(eventId); // Call Firebase function to join the event
+      await joinEvent(eventId);
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
           event.id === eventId
@@ -64,7 +77,7 @@ export const useEvents = () => {
     }
 
     try {
-      await leaveEvent(eventId); // Call Firebase function to leave the event
+      await leaveEvent(eventId);
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
           event.id === eventId
@@ -79,10 +92,29 @@ export const useEvents = () => {
     }
   };
 
-  // Fetch events on component mount
+  // Fetch events on component mount and set up real-time updates
   useEffect(() => {
     fetchEvents();
-  }, []);
+
+    const unsubscribe = onSnapshot(collection(db, "events"), async (snapshot) => {
+      const eventsList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const updatedEvents = await Promise.all(
+        eventsList.map(async (event) => {
+          try {
+            const participants = await getEventParticipants(event.id);
+            const status = getEventStatus(event.date, event.startTime, event.endTime);
+            return { ...event, participants, status };
+          } catch (participantError) {
+            console.error("Error fetching participants for event:", event.id, participantError);
+            return { ...event, participants: [], status: "Upcoming" }; // Fallback
+          }
+        })
+      );
+      setEvents(updatedEvents);
+    });
+
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, [fetchEvents]);
 
   return { events, loading, error, handleJoinEvent, handleLeaveEvent };
 };

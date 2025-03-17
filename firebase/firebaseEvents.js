@@ -13,11 +13,25 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "./firebaseConfig";
 
+// Helper function to check if a user is authenticated
+const checkAuth = () => {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
+  return user;
+};
+
+// Helper function to validate event existence
+const validateEvent = async (eventId) => {
+  const eventRef = doc(db, "events", eventId);
+  const eventSnap = await getDoc(eventRef);
+  if (!eventSnap.exists()) throw new Error("Event not found");
+  return { eventRef, eventData: eventSnap.data() };
+};
+
 // Function to create an event in Firestore
 export const createEvent = async (eventData) => {
   try {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated");
+    const user = checkAuth();
 
     const docRef = await addDoc(collection(db, "events"), {
       ...eventData,
@@ -33,7 +47,7 @@ export const createEvent = async (eventData) => {
     return docRef.id;
   } catch (error) {
     console.error("Error creating event:", error);
-    throw new Error("Error creating event");
+    throw new Error("Failed to create event. Please try again.");
   }
 };
 
@@ -50,11 +64,8 @@ export const getEvents = async () => {
         const eventEnd = new Date(`${data.date} ${data.endTime}`);
 
         let status = "Upcoming";
-        if (now >= eventEnd) {
-          status = "Ended";
-        } else if (now >= eventStart) {
-          status = "Ongoing";
-        }
+        if (now >= eventEnd) status = "Ended";
+        else if (now >= eventStart) status = "Ongoing";
 
         // Update Firestore if status has changed
         if (status !== data.status) {
@@ -68,7 +79,7 @@ export const getEvents = async () => {
     return eventsList;
   } catch (error) {
     console.error("Error fetching events:", error);
-    throw new Error("Error fetching events");
+    throw new Error("Failed to fetch events. Please try again.");
   }
 };
 
@@ -80,44 +91,33 @@ export const getOrganizerEvents = async (organizerId) => {
     return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error("Error fetching organizer events:", error);
-    throw new Error("Error fetching organizer events");
+    throw new Error("Failed to fetch organizer events. Please try again.");
   }
 };
 
 // Function to get a single event by ID
 export const getEventById = async (eventId) => {
   try {
-    const eventRef = doc(db, "events", eventId);
-    const eventSnap = await getDoc(eventRef);
-
-    if (!eventSnap.exists()) throw new Error("Event not found");
-
-    return { id: eventSnap.id, ...eventSnap.data() };
+    const { eventData } = await validateEvent(eventId);
+    return { id: eventId, ...eventData };
   } catch (error) {
     console.error("Error fetching event details:", error);
-    throw new Error("Error fetching event details");
+    throw new Error("Failed to fetch event details. Please try again.");
   }
 };
 
 // Function to join an event
 export const joinEvent = async (eventId) => {
   try {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated");
+    const user = checkAuth();
+    const { eventRef, eventData } = await validateEvent(eventId);
 
-    const eventRef = doc(db, "events", eventId);
-    const eventSnap = await getDoc(eventRef);
-
-    if (!eventSnap.exists()) throw new Error("Event not found");
-
-    const eventData = eventSnap.data();
     if (eventData.status !== "Upcoming") {
       throw new Error("Cannot join an event that has already started or ended.");
     }
 
     if (eventData.participants?.includes(user.uid)) {
-      console.log("User already joined this event");
-      return { success: false, message: "Already joined this event" };
+      return { success: false, message: "You have already joined this event." };
     }
 
     await updateDoc(eventRef, { participants: arrayUnion(user.uid) });
@@ -125,29 +125,22 @@ export const joinEvent = async (eventId) => {
     return { success: true, message: "Successfully joined the event." };
   } catch (error) {
     console.error("Error joining event:", error);
-    return { success: false, message: "Error joining event" };
+    return { success: false, message: error.message || "Failed to join event. Please try again." };
   }
 };
 
 // Function to leave an event
 export const leaveEvent = async (eventId) => {
   try {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated");
+    const user = checkAuth();
+    const { eventRef, eventData } = await validateEvent(eventId);
 
-    const eventRef = doc(db, "events", eventId);
-    const eventSnap = await getDoc(eventRef);
-
-    if (!eventSnap.exists()) throw new Error("Event not found");
-
-    const eventData = eventSnap.data();
     if (eventData.status !== "Upcoming") {
       throw new Error("Cannot leave an event that has already started or ended.");
     }
 
     if (!eventData.participants?.includes(user.uid)) {
-      console.log("User is not a participant of this event");
-      return { success: false, message: "Not a participant of this event" };
+      return { success: false, message: "You are not a participant of this event." };
     }
 
     await updateDoc(eventRef, { participants: arrayRemove(user.uid) });
@@ -155,11 +148,11 @@ export const leaveEvent = async (eventId) => {
     return { success: true, message: "Successfully left the event." };
   } catch (error) {
     console.error("Error leaving event:", error);
-    return { success: false, message: "Error leaving event" };
+    return { success: false, message: error.message || "Failed to leave event. Please try again." };
   }
 };
 
-// Function to update event status (Started, Ended, Canceled)
+// Function to update event status
 export const updateEventStatus = async (eventId, status) => {
   try {
     const eventRef = doc(db, "events", eventId);
@@ -167,6 +160,7 @@ export const updateEventStatus = async (eventId, status) => {
     console.log(`Event ${eventId} updated to ${status}`);
   } catch (error) {
     console.error("Error updating event status:", error);
+    throw new Error("Failed to update event status. Please try again.");
   }
 };
 
@@ -178,15 +172,11 @@ export const cancelEvent = async (eventId) => {
 // Function to get participants' emails (Only for the organizer)
 export const getEventParticipants = async (eventId) => {
   try {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated");
+    const user = checkAuth();
+    const { eventData } = await validateEvent(eventId);
 
-    const eventRef = doc(db, "events", eventId);
-    const eventSnap = await getDoc(eventRef);
-    if (!eventSnap.exists()) throw new Error("Event not found");
-
-    const eventData = eventSnap.data();
-    if (eventData.userId !== user.uid) return []; // Not authorized to view
+    // Only the organizer can view participants
+    if (eventData.userId !== user.uid) return [];
 
     const participantIds = eventData.participants || [];
     const participantEmails = await Promise.all(

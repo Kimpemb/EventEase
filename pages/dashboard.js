@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { auth, db } from "../firebase/firebaseConfig";
-import { getOrganizerEvents, getEventParticipants, joinEvent, leaveEvent } from "../firebase/firebaseEvents";
+import { getOrganizerEvents, getEventParticipants, joinEvent, leaveEvent, getEvents } from "../firebase/firebaseEvents";
 import { doc, deleteDoc } from "firebase/firestore";
 import styles from "../styles/dashboard.module.css";
 
@@ -10,10 +10,64 @@ const categories = [
   "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
 ];
 
+// Reusable EventCard Component
+const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
+  const user = auth.currentUser;
+  const isOrganizer = user?.uid === event.userId;
+  const isParticipant = event.participants?.includes(user?.uid);
+
+  return (
+    <div className={styles.eventCard}>
+      <h3>{event.title}</h3>
+      <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
+      <p>Location: {event.location}</p>
+      <p>Category: {event.category || "Uncategorized"}</p>
+      <p>Organizer: {event.organizer || "Unknown"}</p>
+      <p>Status: {event.status || "Upcoming"}</p>
+      <h4>Participants:</h4>
+      {event.participants?.length > 0 ? (
+        <ul className={styles.participantsList}>
+          {event.participants.map((participant, index) => (
+            <li key={index}>
+              <strong>{participant.username || "Unknown"}</strong> ({participant.email || "No email provided"})
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No participants yet.</p>
+      )}
+      {!isOrganizer && event.status === "Upcoming" && (
+        <div className={styles.buttonContainer}>
+          {isParticipant ? (
+            <button onClick={() => onLeave(event)} className={styles.leaveButton}>
+              Leave Event
+            </button>
+          ) : (
+            <button onClick={() => onJoin(event)} className={styles.joinButton}>
+              Join Event
+            </button>
+          )}
+        </div>
+      )}
+      {isOrganizer && (
+        <div className={styles.buttonContainer}>
+          <button onClick={() => onEdit(event.id)} className={styles.menuButton}>
+            Edit
+          </button>
+          <button onClick={() => onDelete(event.id)} className={styles.leaveButton}>
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const DashboardPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState([]);
+  const [joinedEvents, setJoinedEvents] = useState([]);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -31,16 +85,23 @@ const DashboardPage = () => {
       setLoading(false);
 
       try {
-        const userEvents = await getOrganizerEvents(user.uid);
+        // Fetch all events
+        const allEvents = await getEvents();
         const eventsWithParticipants = await Promise.all(
-          userEvents.map(async (event) => {
+          allEvents.map(async (event) => {
             const participants = (await getEventParticipants(event.id)) || [];
             return { ...event, participants };
           })
         );
         setEvents(eventsWithParticipants);
+
+        // Filter events the user has joined
+        const userJoinedEvents = eventsWithParticipants.filter((event) =>
+          event.participants?.includes(user.uid)
+        );
+        setJoinedEvents(userJoinedEvents);
       } catch (error) {
-        console.error("Error fetching organizer events:", error);
+        console.error("Error fetching events:", error);
         setError("Failed to load events. Please try again later.");
       }
     });
@@ -49,17 +110,9 @@ const DashboardPage = () => {
   }, [router]);
 
   // Calculate counts dynamically
-  const upcomingEventsCount = events.filter(
-    (event) => event.status === "Upcoming"
-  ).length;
-
-  const joinedEventsCount = events.filter(
-    (event) => event.participants?.includes(auth.currentUser?.uid)
-  ).length;
-
-  const pastEventsCount = events.filter(
-    (event) => event.status === "Ended" || event.status === "Cancelled"
-  ).length;
+  const upcomingEventsCount = events.filter((event) => event.status === "Upcoming").length;
+  const joinedEventsCount = joinedEvents.length;
+  const pastEventsCount = events.filter((event) => event.status === "Ended" || event.status === "Cancelled").length;
 
   // Handle user sign-out
   const handleSignOut = async () => {
@@ -97,6 +150,7 @@ const DashboardPage = () => {
             : e
         )
       );
+      setJoinedEvents((prevJoined) => [...prevJoined, event]);
     } catch (err) {
       console.error("Error joining event:", err);
       alert(err.message || "Failed to join event. Please try again later.");
@@ -129,6 +183,7 @@ const DashboardPage = () => {
             : e
         )
       );
+      setJoinedEvents((prevJoined) => prevJoined.filter((e) => e.id !== event.id));
     } catch (err) {
       console.error("Error leaving event:", err);
       alert(err.message || "Failed to leave event. Please try again later.");
@@ -141,6 +196,7 @@ const DashboardPage = () => {
       try {
         await deleteDoc(doc(db, "events", eventId));
         setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
+        setJoinedEvents((prevJoined) => prevJoined.filter((event) => event.id !== eventId));
         alert("Event deleted successfully!");
       } catch (error) {
         console.error("Error deleting event:", error);
@@ -321,66 +377,40 @@ const DashboardPage = () => {
           ) : (
             <div className={styles.eventGrid}>
               {displayedEvents.map((event) => (
-                <div key={event.id} className={styles.eventCard}>
-                  <h3>{event.title}</h3>
-                  <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
-                  <p>Location: {event.location}</p>
-                  <p>Category: {event.category || "Uncategorized"}</p>
-                  <p>Organizer: {event.organizer || "Unknown"}</p>
-                  <p>Status: {event.status || "Upcoming"}</p>
-                  <h4>Participants:</h4>
-                  {event.participants?.length > 0 ? (
-                    <ul className={styles.participantsList}>
-                      {event.participants.map((participant, index) => (
-                        <li key={index}>
-                          <strong>{participant.username || "Unknown"}</strong> ({participant.email || "No email provided"})
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No participants yet.</p>
-                  )}
-                  {auth.currentUser && auth.currentUser.uid !== event.userId && event.status === "Upcoming" && (
-                    <div className={styles.buttonContainer}>
-                      {event.participants?.includes(auth.currentUser?.uid) ? (
-                        <button
-                          onClick={() => handleLeaveEvent(event)}
-                          className={styles.leaveButton}
-                        >
-                          Leave Event
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleJoinEvent(event)}
-                          className={styles.joinButton}
-                        >
-                          Join Event
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {auth.currentUser && auth.currentUser.uid === event.userId && (
-                    <div className={styles.buttonContainer}>
-                      <button
-                        onClick={() => router.push(`/edit-event/${event.id}`)}
-                        className={styles.menuButton}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteEvent(event.id)}
-                        className={styles.leaveButton}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onJoin={handleJoinEvent}
+                  onLeave={handleLeaveEvent}
+                  onDelete={handleDeleteEvent}
+                  onEdit={(eventId) => router.push(`/edit-event/${eventId}`)}
+                />
               ))}
             </div>
           )}
           {filteredEvents.length > 3 && (
             <a href="#" className={styles.viewMore}>View More...</a>
+          )}
+        </section>
+
+        {/* Joined Events */}
+        <section className={styles.joinedEvents}>
+          <h2>✅ Joined Events</h2>
+          {joinedEvents.length === 0 ? (
+            <p>You haven't joined any events yet.</p>
+          ) : (
+            <div className={styles.eventGrid}>
+              {joinedEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onJoin={handleJoinEvent}
+                  onLeave={handleLeaveEvent}
+                  onDelete={handleDeleteEvent}
+                  onEdit={(eventId) => router.push(`/edit-event/${eventId}`)}
+                />
+              ))}
+            </div>
           )}
         </section>
 
