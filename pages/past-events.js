@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
+// Remove the unused Link import
+// import Link from "next/link"; // <-- Remove this line
 import { auth } from "../firebase/firebaseConfig";
 import styles from "../styles/dashboard.module.css"; // Reusing existing styles
 import { useEvents } from "../hooks/useEvents";

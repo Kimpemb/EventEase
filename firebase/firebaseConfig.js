@@ -35,3 +35,22 @@ export const signInWithGoogle = async () => {
     throw error; // Re-throw the error for handling in the calling function
   }
 };
+
+// Initialize Firebase Messaging (FCM) only in the browser
+let messaging;
+if (typeof window !== "undefined") {
+  import("firebase/messaging").then(({ getMessaging }) => {
+    messaging = getMessaging(app);
+  });
+}
+
+// Listen for incoming push notifications (browser-only)
+export const setupPushNotifications = (callback) => {
+  if (typeof window !== "undefined" && messaging) {
+    import("firebase/messaging").then(({ onMessage }) => {
+      onMessage(messaging, (payload) => {
+        if (callback) callback(payload);
+      });
+    });
+  }
+};

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { auth } from "../firebase/firebaseConfig"; 
-import { createEvent } from "../firebase/firebaseEvents"; 
-import styles from "../styles/createEvent.module.css"; 
+import { auth } from "../firebase/firebaseConfig";
+import { createEvent, sendNotification } from "../firebase/firebaseEvents"; // Import sendNotification
+import styles from "../styles/createEvent.module.css";
 
 const CreateEventPage = () => {
   const [title, setTitle] = useState("");
@@ -46,7 +46,7 @@ const CreateEventPage = () => {
     }
 
     try {
-      await createEvent({
+      const eventId = await createEvent({
         title,
         description,
         date,
@@ -57,8 +57,18 @@ const CreateEventPage = () => {
         userId: user.uid,
         organizer: user.displayName || "Unknown Organizer",
       });
+
+      // Send a notification to the organizer
+      await sendNotification(user.uid, {
+        type: "event_created",
+        message: `Your event "${title}" has been successfully created!`,
+        timestamp: new Date(),
+        read: false,
+      });
+
       setSuccess("Event created successfully!");
 
+      // Reset form fields
       setTitle("");
       setDescription("");
       setDate("");
@@ -86,10 +96,7 @@ const CreateEventPage = () => {
       <div className={styles.formPanel}>
         <div className={styles.formHeader}>
           <h1 className={styles.formTitle}>Create Event</h1>
-          <button 
-            onClick={handleCancel}
-            className={styles.cancelButton}
-          >
+          <button onClick={handleCancel} className={styles.cancelButton}>
             Cancel
           </button>
         </div>

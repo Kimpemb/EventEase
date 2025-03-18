@@ -51,6 +51,15 @@ export const createEvent = async (eventData) => {
   }
 };
 
+// Function to send a notification to a user
+export const sendNotification = async (userId, notification) => {
+  try {
+    await addDoc(collection(db, "users", userId, "notifications"), notification);
+  } catch (error) {
+    throw new Error("Failed to send notification: " + error.message);
+  }
+};
+
 // Function to get all events from Firestore
 export const getEvents = async () => {
   try {
@@ -95,7 +104,7 @@ export const getOrganizerEvents = async (organizerId) => {
   }
 };
 
-// New function to get events joined by a specific user
+// Function to get events joined by a specific user
 export const getUserJoinedEvents = async (userId) => {
   try {
     if (!userId) throw new Error("User ID is required");
@@ -126,47 +135,82 @@ export const getEventById = async (eventId) => {
 
 // Function to join an event
 export const joinEvent = async (eventId) => {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
+
   try {
-    const user = checkAuth();
-    const { eventRef, eventData } = await validateEvent(eventId);
+    const eventRef = doc(db, "events", eventId);
+    const eventDoc = await getDoc(eventRef);
 
-    if (eventData.status !== "Upcoming") {
-      throw new Error("Cannot join an event that has already started or ended.");
+    if (!eventDoc.exists()) {
+      throw new Error("Event not found.");
     }
 
-    if (eventData.participants?.includes(user.uid)) {
-      return { success: false, message: "You have already joined this event." };
-    }
+    // Add the user to the event's participants list
+    await updateDoc(eventRef, {
+      participants: arrayUnion(user.uid),
+    });
 
-    await updateDoc(eventRef, { participants: arrayUnion(user.uid) });
-    console.log("User joined event successfully");
-    return { success: true, message: "Successfully joined the event." };
+    // Return the event data
+    return {
+      success: true,
+      event: eventDoc.data(),
+    };
   } catch (error) {
     console.error("Error joining event:", error);
-    return { success: false, message: error.message || "Failed to join event. Please try again." };
+    return {
+      success: false,
+      message: error.message,
+    };
   }
 };
 
 // Function to leave an event
 export const leaveEvent = async (eventId) => {
-  try {
-    const user = checkAuth();
-    const { eventRef, eventData } = await validateEvent(eventId);
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("User not authenticated.");
+  }
 
+  try {
+    const eventRef = doc(db, "events", eventId);
+    const eventDoc = await getDoc(eventRef);
+
+    if (!eventDoc.exists()) {
+      throw new Error("Event not found.");
+    }
+
+    const eventData = eventDoc.data();
+
+    // Check if the event has already started or ended
     if (eventData.status !== "Upcoming") {
       throw new Error("Cannot leave an event that has already started or ended.");
     }
 
+    // Check if the user is a participant
     if (!eventData.participants?.includes(user.uid)) {
       return { success: false, message: "You are not a participant of this event." };
     }
 
-    await updateDoc(eventRef, { participants: arrayRemove(user.uid) });
-    console.log("User left event successfully");
-    return { success: true, message: "Successfully left the event." };
+    // Remove the user from the event's participants list
+    await updateDoc(eventRef, {
+      participants: arrayRemove(user.uid),
+    });
+
+    // Return the event data
+    return {
+      success: true,
+      event: eventData,
+      message: "Successfully left the event.",
+    };
   } catch (error) {
     console.error("Error leaving event:", error);
-    return { success: false, message: error.message || "Failed to leave event. Please try again." };
+    return {
+      success: false,
+      message: error.message || "Failed to leave event. Please try again.",
+    };
   }
 };
 

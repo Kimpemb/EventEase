@@ -1,0 +1,45 @@
+/* styles/NotificationCenter.module.css */
+.notificationCenter {
+    padding: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  
+  .notificationList {
+    margin-top: 1rem;
+  }
+  
+  .notification {
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .notification p {
+    margin: 0;
+  }
+  
+  .notification small {
+    color: #666;
+    font-size: 0.875rem;
+  }
+  
+  .markRead {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+  
+  .clearAll {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 1rem;
+  }

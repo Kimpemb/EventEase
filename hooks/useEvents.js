@@ -8,6 +8,16 @@ import {
 } from "../firebase/firebaseEvents";
 import { auth, db } from "../firebase/firebaseConfig";
 import { collection, onSnapshot } from "firebase/firestore";
+import { sendNotification } from "../firebase/NotificationService";
+
+// Helper function to check if the browser supports notifications
+const isNotificationSupported = () => {
+  return (
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window
+  );
+};
 
 export const useEvents = () => {
   const [events, setEvents] = useState([]);
@@ -104,39 +114,51 @@ export const useEvents = () => {
   }, [categorizeEvents]);
 
   // Handle joining an event
-  const handleJoinEvent = async (eventId) => {
-    const user = auth.currentUser;
-    if (!user) {
-      alert("You must be signed in to join an event.");
-      return false;
-    }
+// hooks/useEvents.js
+const handleJoinEvent = async (eventId) => {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("You must be signed in to join an event.");
+    return false;
+  }
 
-    try {
-      const result = await joinEvent(eventId);
+  try {
+    const result = await joinEvent(eventId);
+    
+    if (result.success) {
+      // Update local state
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId
+            ? { ...event, participants: [...(event.participants || []), user.uid] }
+            : event
+        )
+      );
       
-      if (result.success) {
-        // Update local state
-        setEvents((prevEvents) =>
-          prevEvents.map((event) =>
-            event.id === eventId
-              ? { ...event, participants: [...(event.participants || []), user.uid] }
-              : event
-          )
-        );
-        
-        // Fetch events again to update all categories
-        fetchEvents();
-        return true;
-      } else {
-        alert(result.message);
-        return false;
+      // Fetch events again to update all categories
+      fetchEvents();
+
+      // Send notification if supported
+      if (isNotificationSupported() && result.event) {
+        await sendNotification({
+          userId: user.uid,
+          type: "event_joined",
+          message: `You've successfully joined the event: ${result.event.title}`,
+          channel: "in-app",
+        });
       }
-    } catch (err) {
-      console.error("Error joining event:", err);
-      alert(err.message || "Failed to join event. Please try again later.");
+
+      return true;
+    } else {
+      alert(result.message);
       return false;
     }
-  };
+  } catch (err) {
+    console.error("Error joining event:", err);
+    alert(err.message || "Failed to join event. Please try again later.");
+    return false;
+  }
+};
 
   // Handle leaving an event
   const handleLeaveEvent = async (eventId) => {
@@ -164,6 +186,17 @@ export const useEvents = () => {
         
         // Fetch events again to update all categories
         fetchEvents();
+
+        // Send notification if supported
+        if (isNotificationSupported()) {
+          await sendNotification({
+            userId: user.uid,
+            type: "event_left",
+            message: `You've left the event: ${result.event.title}`,
+            channel: "in-app",
+          });
+        }
+
         return true;
       } else {
         alert(result.message);

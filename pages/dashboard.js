@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { auth, db } from "../firebase/firebaseConfig";
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, collection, onSnapshot, updateDoc } from "firebase/firestore";
 import styles from "../styles/dashboard.module.css";
 import { useEvents } from "../hooks/useEvents";
+import { query, orderBy } from "firebase/firestore";
 
 const categories = [
   "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
@@ -58,11 +59,12 @@ function Dashboard() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   
   // Use the custom hook to manage events
   const { 
-    // Removed unused 'events' variable
     joinedEvents, 
     pastEvents,
     upcomingEvents,
@@ -72,6 +74,74 @@ function Dashboard() {
     handleLeaveEvent,
     refreshEvents
   } = useEvents();
+
+  // Fetch notifications from Firestore
+  useEffect(() => {
+    if (!user) return;
+  
+    // Query notifications for the current user, ordered by timestamp
+    const q = query(
+      collection(db, "users", user.uid, "notifications"),
+      orderBy("timestamp", "desc")
+    );
+  
+    // Subscribe to real-time updates
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      try {
+        const notificationsList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setNotifications(notificationsList);
+  
+        // Calculate the number of unread notifications
+        const unread = notificationsList.filter((n) => !n.read).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    });
+  
+    // Clean up the listener when the component unmounts
+    return () => unsubscribe();
+  }, [user]);
+
+
+// Handle marking a notification as read
+const handleMarkAsRead = async (notificationId) => {
+  if (!user) return;
+
+  try {
+    await updateDoc(doc(db, "users", user.uid, "notifications", notificationId), {
+      read: true,
+    });
+    console.log("Notification marked as read:", notificationId);
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    alert("Failed to mark notification as read. Please try again.");
+  }
+};
+
+// Handle clearing all notifications
+const handleClearAll = async () => {
+  if (!user) return;
+
+  try {
+    // Create a batch to update all notifications
+    const batch = notifications.map((n) =>
+      updateDoc(doc(db, "users", user.uid, "notifications", n.id), {
+        read: true,
+      })
+    );
+
+    // Execute the batch
+    await Promise.all(batch);
+    console.log("All notifications marked as read.");
+  } catch (error) {
+    console.error("Error clearing notifications:", error);
+    alert("Failed to clear notifications. Please try again.");
+  }
+};
 
   // Handle auth state change
   useEffect(() => {
@@ -218,7 +288,9 @@ function Dashboard() {
 
             <span className={styles.username}>{user?.displayName || user?.email}</span>
 
-            <button className={styles.menuButton}>Notifications (3)</button>
+            <button className={styles.menuButton}>
+              Notifications ({unreadCount})
+            </button>
 
             <button onClick={handleSignOut} className={styles.menuButton}>
               Logout
@@ -274,7 +346,9 @@ function Dashboard() {
 
             <span className={styles.username}>{user?.displayName || user?.email}</span>
 
-            <button className={styles.menuButton}>Notifications (3)</button>
+            <button className={styles.menuButton}>
+              Notifications ({unreadCount})
+            </button>
 
             <button onClick={handleSignOut} className={styles.menuButton}>
               Logout
@@ -374,28 +448,52 @@ function Dashboard() {
           )}
         </section>
 
-        {/* Notifications */}
+        {/* Notification */}
         <section className={styles.notifications}>
-          <h2>🔔 Notifications</h2>
-          <div className={styles.notificationList}>
-            <div className={styles.notification}>
-              <span className={styles.icon}>📢</span>
-              <p>Event &quot;Music Fest&quot; starts in 2 days!</p>
-              <button className={styles.markRead}>Mark as Read</button>
-            </div>
-            <div className={styles.notification}>
-              <span className={styles.icon}>❌</span>
-              <p>Event &quot;Tech Meetup&quot; was canceled.</p>
-              <button className={styles.markRead}>Mark as Read</button>
-            </div>
-            <div className={styles.notification}>
-              <span className={styles.icon}>📩</span>
-              <p>Verify your email to access all features.</p>
-              <button className={styles.markRead}>Mark as Read</button>
-            </div>
+  <h2>🔔 Notifications ({unreadCount} unread)</h2>
+  <div className={styles.notificationList}>
+    {notifications.length === 0 ? (
+      <p className={styles.noNotifications}>No notifications to display.</p>
+    ) : (
+      notifications.map((notification) => (
+        <div key={notification.id} className={styles.notification}>
+          {/* Notification Icon */}
+          <span className={styles.icon}>
+            {notification.type === "event_joined" && "🎉"}
+            {notification.type === "event_left" && "🚪"}
+            {notification.type === "event_canceled" && "❌"}
+            {notification.type === "event_deleted" && "🗑️"}
+          </span>
+
+          {/* Notification Message */}
+          <div className={styles.notificationContent}>
+            <p className={styles.notificationMessage}>{notification.message}</p>
+            <small className={styles.notificationTimestamp}>
+              {new Date(notification.timestamp?.toDate()).toLocaleString()}
+            </small>
           </div>
-          <button className={styles.clearAll}>Clear All</button>
-        </section>
+
+          {/* Mark as Read Button */}
+          {!notification.read && (
+            <button
+              onClick={() => handleMarkAsRead(notification.id)}
+              className={styles.markRead}
+            >
+              Mark as Read
+            </button>
+          )}
+        </div>
+      ))
+    )}
+  </div>
+    
+  {/* Clear All Button */}
+  {notifications.length > 0 && (
+    <button onClick={handleClearAll} className={styles.clearAll}>
+      Clear All Notifications
+    </button>
+  )}
+</section>
 
         {/* Profile & Settings */}
         <section className={styles.profileSettings}>
