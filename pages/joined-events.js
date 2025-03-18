@@ -49,7 +49,6 @@ const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
 };
 
 function JoinedEvents() {
-  const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState(""); // Added status filter
@@ -72,7 +71,6 @@ function JoinedEvents() {
         router.replace("/signin");
         return;
       }
-      setUser(user);
     });
 
     return () => {
