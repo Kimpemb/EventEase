@@ -342,7 +342,9 @@ function Dashboard() {
             </div>
           )}
           {joinedEvents.length > 3 && (
-            <a href="#" className={styles.viewMore}>View All Joined Events...</a>
+            <Link href="/joined-events" className={styles.viewMore}>
+              View All Joined Events...
+            </Link>
           )}
         </section>
 
