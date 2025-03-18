@@ -95,6 +95,24 @@ export const getOrganizerEvents = async (organizerId) => {
   }
 };
 
+// New function to get events joined by a specific user
+export const getUserJoinedEvents = async (userId) => {
+  try {
+    if (!userId) throw new Error("User ID is required");
+    
+    const q = query(
+      collection(db, "events"), 
+      where("participants", "array-contains", userId)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching joined events:", error);
+    throw new Error("Failed to fetch joined events. Please try again.");
+  }
+};
+
 // Function to get a single event by ID
 export const getEventById = async (eventId) => {
   try {
@@ -169,27 +187,46 @@ export const cancelEvent = async (eventId) => {
   return updateEventStatus(eventId, "Canceled");
 };
 
-// Function to get participants' emails (Only for the organizer)
+// Function to get participants for an event
 export const getEventParticipants = async (eventId) => {
+  try {
+    const { eventData } = await validateEvent(eventId);
+    return eventData.participants || [];
+  } catch (error) {
+    console.error("Error fetching participants:", error);
+    return [];
+  }
+};
+
+// Function to get participants' details (Only for the organizer)
+export const getEventParticipantsDetails = async (eventId) => {
   try {
     const user = checkAuth();
     const { eventData } = await validateEvent(eventId);
 
-    // Only the organizer can view participants
+    // Only the organizer can view detailed participants info
     if (eventData.userId !== user.uid) return [];
 
     const participantIds = eventData.participants || [];
-    const participantEmails = await Promise.all(
+    const participantDetails = await Promise.all(
       participantIds.map(async (participantId) => {
         const userRef = doc(db, "users", participantId);
         const userSnap = await getDoc(userRef);
-        return userSnap.exists() ? userSnap.data().email : "Unknown User";
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          return {
+            id: participantId,
+            email: userData.email || "Unknown Email",
+            username: userData.displayName || "Unknown User"
+          };
+        }
+        return { id: participantId, email: "Unknown Email", username: "Unknown User" };
       })
     );
 
-    return participantEmails;
+    return participantDetails;
   } catch (error) {
-    console.error("Error fetching participants:", error);
+    console.error("Error fetching participant details:", error);
     return [];
   }
 };

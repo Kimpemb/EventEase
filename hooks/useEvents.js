@@ -1,10 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
-import { getEvents, joinEvent, leaveEvent, getEventParticipants } from "../firebase/firebaseEvents";
+import { 
+  getEvents, 
+  joinEvent, 
+  leaveEvent, 
+  getEventParticipants, 
+  getUserJoinedEvents 
+} from "../firebase/firebaseEvents";
 import { auth, db } from "../firebase/firebaseConfig";
 import { collection, onSnapshot } from "firebase/firestore";
 
 export const useEvents = () => {
   const [events, setEvents] = useState([]);
+  const [joinedEvents, setJoinedEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,52 +28,113 @@ export const useEvents = () => {
     return "Upcoming";
   };
 
+  // Categorize events by status
+  const categorizeEvents = useCallback((eventsList) => {
+    const user = auth.currentUser;
+    
+    if (eventsList.length > 0) {
+      const joined = eventsList.filter(event => 
+        event.participants?.includes(user?.uid)
+      );
+      
+      const past = eventsList.filter(event => 
+        event.status === "Ended" || event.status === "Canceled"
+      );
+      
+      const upcoming = eventsList.filter(event => 
+        event.status === "Upcoming" || event.status === "Ongoing"
+      );
+      
+      setJoinedEvents(joined);
+      setPastEvents(past);
+      setUpcomingEvents(upcoming);
+    }
+  }, []);
+
   // Fetch events and their participants
   const fetchEvents = useCallback(async () => {
     try {
+      setLoading(true);
+      const user = auth.currentUser;
+      
+      // Get all events
       const eventsList = await getEvents();
+      
+      // Get joined events specifically
+      let userJoinedEvents = [];
+      if (user) {
+        userJoinedEvents = await getUserJoinedEvents(user.uid);
+      }
+      
+      // Merge and update events with participants and status
       const updatedEvents = await Promise.all(
         eventsList.map(async (event) => {
           try {
+            // Fetch participants IDs (not full details)
             const participants = await getEventParticipants(event.id);
+            // Calculate current status
             const status = getEventStatus(event.date, event.startTime, event.endTime);
-            return { ...event, participants, status };
+            
+            // Return event with updated data
+            return { 
+              ...event, 
+              participants,
+              status 
+            };
           } catch (participantError) {
-            console.error("Error fetching participants for event:", event.id, participantError);
-            return { ...event, participants: [], status: "Upcoming" }; // Fallback
+            console.error("Error processing event:", event.id, participantError);
+            // Return with default values if error
+            return { 
+              ...event, 
+              participants: [],
+              status: event.status || "Upcoming"
+            };
           }
         })
       );
+      
       setEvents(updatedEvents);
+      categorizeEvents(updatedEvents);
     } catch (err) {
       console.error("Error fetching events:", err);
       setError("Failed to load events. Please try again later.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [categorizeEvents]);
 
   // Handle joining an event
   const handleJoinEvent = async (eventId) => {
     const user = auth.currentUser;
     if (!user) {
       alert("You must be signed in to join an event.");
-      return;
+      return false;
     }
 
     try {
-      await joinEvent(eventId);
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === eventId
-            ? { ...event, participants: [...(event.participants || []), user.uid] }
-            : event
-        )
-      );
-      alert("You have successfully joined the event!");
+      const result = await joinEvent(eventId);
+      
+      if (result.success) {
+        // Update local state
+        setEvents((prevEvents) =>
+          prevEvents.map((event) =>
+            event.id === eventId
+              ? { ...event, participants: [...(event.participants || []), user.uid] }
+              : event
+          )
+        );
+        
+        // Fetch events again to update all categories
+        fetchEvents();
+        return true;
+      } else {
+        alert(result.message);
+        return false;
+      }
     } catch (err) {
       console.error("Error joining event:", err);
       alert(err.message || "Failed to join event. Please try again later.");
+      return false;
     }
   };
 
@@ -73,48 +143,73 @@ export const useEvents = () => {
     const user = auth.currentUser;
     if (!user) {
       alert("You must be signed in to leave an event.");
-      return;
+      return false;
     }
 
     try {
-      await leaveEvent(eventId);
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === eventId
-            ? { ...event, participants: event.participants?.filter((id) => id !== user.uid) }
-            : event
-        )
-      );
-      alert("You have successfully left the event!");
+      const result = await leaveEvent(eventId);
+      
+      if (result.success) {
+        // Update local state
+        setEvents((prevEvents) =>
+          prevEvents.map((event) =>
+            event.id === eventId
+              ? { 
+                  ...event, 
+                  participants: event.participants?.filter((id) => id !== user.uid) || []
+                }
+              : event
+          )
+        );
+        
+        // Fetch events again to update all categories
+        fetchEvents();
+        return true;
+      } else {
+        alert(result.message);
+        return false;
+      }
     } catch (err) {
       console.error("Error leaving event:", err);
       alert(err.message || "Failed to leave event. Please try again later.");
+      return false;
     }
   };
 
-  // Fetch events on component mount and set up real-time updates
+  // Set up real-time updates for events
   useEffect(() => {
     fetchEvents();
 
-    const unsubscribe = onSnapshot(collection(db, "events"), async (snapshot) => {
-      const eventsList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      const updatedEvents = await Promise.all(
-        eventsList.map(async (event) => {
-          try {
-            const participants = await getEventParticipants(event.id);
-            const status = getEventStatus(event.date, event.startTime, event.endTime);
-            return { ...event, participants, status };
-          } catch (participantError) {
-            console.error("Error fetching participants for event:", event.id, participantError);
-            return { ...event, participants: [], status: "Upcoming" }; // Fallback
-          }
-        })
-      );
-      setEvents(updatedEvents);
+    // Listen for real-time updates
+    const unsubscribe = onSnapshot(collection(db, "events"), () => {
+      fetchEvents(); // Refetch all data when any event changes
     });
 
-    return () => unsubscribe(); // Cleanup listener on unmount
+    // Clean up listener on unmount
+    return () => unsubscribe();
   }, [fetchEvents]);
 
-  return { events, loading, error, handleJoinEvent, handleLeaveEvent };
+  // Listen for auth state changes to update joined events
+  useEffect(() => {
+    const unsubAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        // Re-categorize events when user signs in/out
+        categorizeEvents(events);
+      }
+    });
+    
+    return () => unsubAuth();
+  }, [events, categorizeEvents]);
+
+  return { 
+    events, 
+    joinedEvents,
+    pastEvents,
+    upcomingEvents,
+    loading, 
+    error, 
+    handleJoinEvent, 
+    handleLeaveEvent,
+    refreshEvents: fetchEvents
+  };
 };

@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { auth, db } from "../firebase/firebaseConfig";
-import { getOrganizerEvents, getEventParticipants, joinEvent, leaveEvent, getEvents } from "../firebase/firebaseEvents";
-import { doc, deleteDoc } from "firebase/firestore";
+import { deleteDoc, doc } from "firebase/firestore";
 import styles from "../styles/dashboard.module.css";
+import { useEvents } from "../hooks/useEvents";
 
 const categories = [
   "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
@@ -22,28 +22,18 @@ const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
       <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
       <p>Location: {event.location}</p>
       <p>Category: {event.category || "Uncategorized"}</p>
-      <p>Organizer: {event.organizer || "Unknown"}</p>
+      <p>Organizer: {event.username || "Unknown"}</p>
       <p>Status: {event.status || "Upcoming"}</p>
-      <h4>Participants:</h4>
-      {event.participants?.length > 0 ? (
-        <ul className={styles.participantsList}>
-          {event.participants.map((participant, index) => (
-            <li key={index}>
-              <strong>{participant.username || "Unknown"}</strong> ({participant.email || "No email provided"})
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No participants yet.</p>
-      )}
+      <p>Participants: {event.participants?.length || 0}</p>
+      
       {!isOrganizer && event.status === "Upcoming" && (
         <div className={styles.buttonContainer}>
           {isParticipant ? (
-            <button onClick={() => onLeave(event)} className={styles.leaveButton}>
+            <button onClick={() => onLeave(event.id)} className={styles.leaveButton}>
               Leave Event
             </button>
           ) : (
-            <button onClick={() => onJoin(event)} className={styles.joinButton}>
+            <button onClick={() => onJoin(event.id)} className={styles.joinButton}>
               Join Event
             </button>
           )}
@@ -63,56 +53,40 @@ const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
   );
 };
 
-const DashboardPage = () => {
+function Dashboard() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [events, setEvents] = useState([]);
-  const [joinedEvents, setJoinedEvents] = useState([]);
-  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
+  
+  // Use the custom hook to manage events
+  const { 
+    events, 
+    joinedEvents, 
+    pastEvents,
+    upcomingEvents,
+    loading, 
+    error, 
+    handleJoinEvent, 
+    handleLeaveEvent,
+    refreshEvents
+  } = useEvents();
 
-  // Fetch user and events on component mount
+  // Handle auth state change
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
       if (!user) {
         router.replace("/signin");
         return;
       }
       setUser(user);
-      setLoading(false);
-
-      try {
-        // Fetch all events
-        const allEvents = await getEvents();
-        const eventsWithParticipants = await Promise.all(
-          allEvents.map(async (event) => {
-            const participants = (await getEventParticipants(event.id)) || [];
-            return { ...event, participants };
-          })
-        );
-        setEvents(eventsWithParticipants);
-
-        // Filter events the user has joined
-        const userJoinedEvents = eventsWithParticipants.filter((event) =>
-          event.participants?.includes(user.uid)
-        );
-        setJoinedEvents(userJoinedEvents);
-      } catch (error) {
-        console.error("Error fetching events:", error);
-        setError("Failed to load events. Please try again later.");
-      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+    };
   }, [router]);
-
-  // Calculate counts dynamically
-  const upcomingEventsCount = events.filter((event) => event.status === "Upcoming").length;
-  const joinedEventsCount = joinedEvents.length;
-  const pastEventsCount = events.filter((event) => event.status === "Ended" || event.status === "Cancelled").length;
 
   // Handle user sign-out
   const handleSignOut = async () => {
@@ -125,68 +99,20 @@ const DashboardPage = () => {
   };
 
   // Handle joining an event
-  const handleJoinEvent = async (event) => {
-    const user = auth.currentUser;
-    if (!user) {
-      alert("You must be signed in to join an event.");
-      return;
-    }
-    if (event.status === "Ended" || event.status === "Cancelled") {
-      alert("You cannot join this event.");
-      return;
-    }
-    if (event.participants?.includes(user.uid)) {
-      alert("You have already joined this event.");
-      return;
-    }
-
-    try {
-      await joinEvent(event.id);
+  const handleEventJoin = async (eventId) => {
+    const success = await handleJoinEvent(eventId);
+    if (success) {
       alert("You have successfully joined the event!");
-      setEvents((prevEvents) =>
-        prevEvents.map((e) =>
-          e.id === event.id
-            ? { ...e, participants: [...(e.participants || []), user.uid] }
-            : e
-        )
-      );
-      setJoinedEvents((prevJoined) => [...prevJoined, event]);
-    } catch (err) {
-      console.error("Error joining event:", err);
-      alert(err.message || "Failed to join event. Please try again later.");
+      refreshEvents(); // Refresh events to update counts
     }
   };
 
   // Handle leaving an event
-  const handleLeaveEvent = async (event) => {
-    const user = auth.currentUser;
-    if (!user) {
-      alert("You must be signed in to leave an event.");
-      return;
-    }
-    if (event.status === "Ended" || event.status === "Cancelled") {
-      alert("You cannot leave this event.");
-      return;
-    }
-    if (!event.participants?.includes(user.uid)) {
-      alert("You are not a participant of this event.");
-      return;
-    }
-
-    try {
-      await leaveEvent(event.id);
+  const handleEventLeave = async (eventId) => {
+    const success = await handleLeaveEvent(eventId);
+    if (success) {
       alert("You have successfully left the event!");
-      setEvents((prevEvents) =>
-        prevEvents.map((e) =>
-          e.id === event.id
-            ? { ...e, participants: e.participants?.filter((id) => id !== user.uid) }
-            : e
-        )
-      );
-      setJoinedEvents((prevJoined) => prevJoined.filter((e) => e.id !== event.id));
-    } catch (err) {
-      console.error("Error leaving event:", err);
-      alert(err.message || "Failed to leave event. Please try again later.");
+      refreshEvents(); // Refresh events to update counts
     }
   };
 
@@ -195,9 +121,8 @@ const DashboardPage = () => {
     if (window.confirm("Are you sure you want to delete this event?")) {
       try {
         await deleteDoc(doc(db, "events", eventId));
-        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
-        setJoinedEvents((prevJoined) => prevJoined.filter((event) => event.id !== eventId));
         alert("Event deleted successfully!");
+        refreshEvents(); // Refresh events after deletion
       } catch (error) {
         console.error("Error deleting event:", error);
         alert("Failed to delete event. Please try again.");
@@ -205,16 +130,17 @@ const DashboardPage = () => {
     }
   };
 
-  // Filter events based on search, category, and status
-  const filteredEvents = events.filter((event) => {
+  // Filter events based on search and category
+  const filteredUpcomingEvents = upcomingEvents.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
-    const matchesSearch = search ? event.title?.toLowerCase().includes(search.toLowerCase()) : true;
-    const isUpcoming = event.status === "Upcoming";
-    return matchesCategory && matchesSearch && isUpcoming;
+    const matchesSearch = search 
+      ? event.title?.toLowerCase().includes(search.toLowerCase()) 
+      : true;
+    return matchesCategory && matchesSearch;
   });
 
   // Limit the number of displayed events to 3
-  const displayedEvents = filteredEvents.slice(0, 3);
+  const displayedUpcomingEvents = filteredUpcomingEvents.slice(0, 3);
 
   // Toggle hamburger menu
   const toggleMenu = () => {
@@ -230,6 +156,7 @@ const DashboardPage = () => {
       if (
         isMenuOpen &&
         mobileNav &&
+        hamburger &&
         !mobileNav.contains(e.target) &&
         !hamburger.contains(e.target)
       ) {
@@ -281,15 +208,15 @@ const DashboardPage = () => {
               ))}
             </select>
 
-            <Link href="/create-event" passHref>
+            <Link href="/create-event">
               <button className={styles.menuButton}>Create Event</button>
             </Link>
 
-            <Link href="/events" passHref>
+            <Link href="/events">
               <button className={styles.menuButton}>View All Events</button>
             </Link>
 
-            <span className={styles.username}>{user.displayName || user.email}</span>
+            <span className={styles.username}>{user?.displayName || user?.email}</span>
 
             <button className={styles.menuButton}>Notifications (3)</button>
 
@@ -337,15 +264,15 @@ const DashboardPage = () => {
               ))}
             </select>
 
-            <Link href="/create-event" passHref>
+            <Link href="/create-event">
               <button className={styles.menuButton}>Create Event</button>
             </Link>
 
-            <Link href="/events" passHref>
+            <Link href="/events">
               <button className={styles.menuButton}>View All Events</button>
             </Link>
 
-            <span className={styles.username}>{user.displayName || user.email}</span>
+            <span className={styles.username}>{user?.displayName || user?.email}</span>
 
             <button className={styles.menuButton}>Notifications (3)</button>
 
@@ -358,12 +285,12 @@ const DashboardPage = () => {
         {/* Welcome Section */}
         <section className={styles.welcomeSection}>
           <p className={styles.welcomeText}>
-            Welcome back, <span className={styles.userName}>{user.displayName || user.email}</span>! 👋
+            Welcome back, <span className={styles.userName}>{user?.displayName || user?.email}</span>! 👋
           </p>
           <div className={styles.eventSummary}>
-            <span>Upcoming Events: <strong>{upcomingEventsCount}</strong></span>
-            <span>Joined Events: <strong>{joinedEventsCount}</strong></span>
-            <span>Past Events: <strong>{pastEventsCount}</strong></span>
+            <span>Upcoming Events: <strong>{upcomingEvents.length}</strong></span>
+            <span>Joined Events: <strong>{joinedEvents.length}</strong></span>
+            <span>Past Events: <strong>{pastEvents.length}</strong></span>
           </div>
         </section>
 
@@ -372,45 +299,74 @@ const DashboardPage = () => {
           <h2>📅 Upcoming Events</h2>
           {error ? (
             <p className={styles.error}>{error}</p>
-          ) : displayedEvents.length === 0 ? (
+          ) : displayedUpcomingEvents.length === 0 ? (
             <p>No upcoming events available.</p>
           ) : (
             <div className={styles.eventGrid}>
-              {displayedEvents.map((event) => (
+              {displayedUpcomingEvents.map((event) => (
                 <EventCard
                   key={event.id}
                   event={event}
-                  onJoin={handleJoinEvent}
-                  onLeave={handleLeaveEvent}
+                  onJoin={handleEventJoin}
+                  onLeave={handleEventLeave}
                   onDelete={handleDeleteEvent}
                   onEdit={(eventId) => router.push(`/edit-event/${eventId}`)}
                 />
               ))}
             </div>
           )}
-          {filteredEvents.length > 3 && (
-            <a href="#" className={styles.viewMore}>View More...</a>
+          {filteredUpcomingEvents.length > 3 && (
+            <Link href="/events">
+              <a className={styles.viewMore}>View More...</a>
+            </Link>
           )}
         </section>
 
         {/* Joined Events */}
         <section className={styles.joinedEvents}>
-          <h2>✅ Joined Events</h2>
+          <h2>✅ My Joined Events ({joinedEvents.length})</h2>
           {joinedEvents.length === 0 ? (
             <p>You haven't joined any events yet.</p>
           ) : (
             <div className={styles.eventGrid}>
-              {joinedEvents.map((event) => (
+              {joinedEvents.slice(0, 3).map((event) => (
                 <EventCard
                   key={event.id}
                   event={event}
-                  onJoin={handleJoinEvent}
-                  onLeave={handleLeaveEvent}
+                  onJoin={handleEventJoin}
+                  onLeave={handleEventLeave}
                   onDelete={handleDeleteEvent}
                   onEdit={(eventId) => router.push(`/edit-event/${eventId}`)}
                 />
               ))}
             </div>
+          )}
+          {joinedEvents.length > 3 && (
+            <a href="#" className={styles.viewMore}>View All Joined Events...</a>
+          )}
+        </section>
+
+        {/* Past Events Section */}
+        <section className={styles.pastEvents}>
+          <h2>🗓 Past Events ({pastEvents.length})</h2>
+          {pastEvents.length === 0 ? (
+            <p>No past events found.</p>
+          ) : (
+            <div className={styles.eventGrid}>
+              {pastEvents.slice(0, 3).map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onJoin={handleEventJoin}
+                  onLeave={handleEventLeave}
+                  onDelete={handleDeleteEvent}
+                  onEdit={(eventId) => router.push(`/edit-event/${eventId}`)}
+                />
+              ))}
+            </div>
+          )}
+          {pastEvents.length > 3 && (
+            <a href="#" className={styles.viewMore}>View All Past Events...</a>
           )}
         </section>
 
@@ -470,6 +426,6 @@ const DashboardPage = () => {
       </div>
     </div>
   );
-};
+}
 
-export default DashboardPage;
+export default Dashboard;
