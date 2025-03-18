@@ -62,7 +62,7 @@ function Dashboard() {
   
   // Use the custom hook to manage events
   const { 
-    events, 
+    // Removed unused 'events' variable
     joinedEvents, 
     pastEvents,
     upcomingEvents,
@@ -326,7 +326,7 @@ function Dashboard() {
         <section className={styles.joinedEvents}>
           <h2>✅ My Joined Events ({joinedEvents.length})</h2>
           {joinedEvents.length === 0 ? (
-            <p>You haven't joined any events yet.</p>
+            <p>You haven&apos;t joined any events yet.</p>
           ) : (
             <div className={styles.eventGrid}>
               {joinedEvents.slice(0, 3).map((event) => (
