@@ -10,7 +10,7 @@ const categories = [
   "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
 ];
 
-// Reusable EventCard Component
+// Modified EventCard component for both files
 const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
   const user = auth.currentUser;
   const isOrganizer = user?.uid === event.userId;
@@ -39,7 +39,7 @@ const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
           )}
         </div>
       )}
-      {isOrganizer && (
+      {isOrganizer && event.status !== "Ended" && (
         <div className={styles.buttonContainer}>
           <button onClick={() => onEdit(event.id)} className={styles.menuButton}>
             Edit
@@ -368,7 +368,9 @@ function Dashboard() {
             </div>
           )}
           {pastEvents.length > 3 && (
-            <a href="#" className={styles.viewMore}>View All Past Events...</a>
+            <Link href="/past-events" className={styles.viewMore}>
+              View All Past Events...
+            </Link>
           )}
         </section>
 

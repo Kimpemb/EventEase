@@ -5,48 +5,48 @@ import { auth } from "../firebase/firebaseConfig";
 import styles from "../styles/dashboard.module.css"; // Reusing existing styles
 import { useEvents } from "../hooks/useEvents";
 
-// Reuse EventCard component from dashboard.js
+// Modified EventCard component for both files (joined-events & dashboard)
 const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
-  const user = auth.currentUser;
-  const isOrganizer = user?.uid === event.userId;
-  const isParticipant = event.participants?.includes(user?.uid);
-
-  return (
-    <div className={styles.eventCard}>
-      <h3>{event.title}</h3>
-      <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
-      <p>Location: {event.location}</p>
-      <p>Category: {event.category || "Uncategorized"}</p>
-      <p>Organizer: {event.username || "Unknown"}</p>
-      <p>Status: {event.status || "Upcoming"}</p>
-      <p>Participants: {event.participants?.length || 0}</p>
-      
-      {!isOrganizer && event.status === "Upcoming" && (
-        <div className={styles.buttonContainer}>
-          {isParticipant ? (
-            <button onClick={() => onLeave(event.id)} className={styles.leaveButton}>
-              Leave Event
+    const user = auth.currentUser;
+    const isOrganizer = user?.uid === event.userId;
+    const isParticipant = event.participants?.includes(user?.uid);
+  
+    return (
+      <div className={styles.eventCard}>
+        <h3>{event.title}</h3>
+        <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
+        <p>Location: {event.location}</p>
+        <p>Category: {event.category || "Uncategorized"}</p>
+        <p>Organizer: {event.username || "Unknown"}</p>
+        <p>Status: {event.status || "Upcoming"}</p>
+        <p>Participants: {event.participants?.length || 0}</p>
+        
+        {!isOrganizer && event.status === "Upcoming" && (
+          <div className={styles.buttonContainer}>
+            {isParticipant ? (
+              <button onClick={() => onLeave(event.id)} className={styles.leaveButton}>
+                Leave Event
+              </button>
+            ) : (
+              <button onClick={() => onJoin(event.id)} className={styles.joinButton}>
+                Join Event
+              </button>
+            )}
+          </div>
+        )}
+        {isOrganizer && event.status !== "Ended" && (
+          <div className={styles.buttonContainer}>
+            <button onClick={() => onEdit(event.id)} className={styles.menuButton}>
+              Edit
             </button>
-          ) : (
-            <button onClick={() => onJoin(event.id)} className={styles.joinButton}>
-              Join Event
+            <button onClick={() => onDelete(event.id)} className={styles.leaveButton}>
+              Delete
             </button>
-          )}
-        </div>
-      )}
-      {isOrganizer && (
-        <div className={styles.buttonContainer}>
-          <button onClick={() => onEdit(event.id)} className={styles.menuButton}>
-            Edit
-          </button>
-          <button onClick={() => onDelete(event.id)} className={styles.leaveButton}>
-            Delete
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
+          </div>
+        )}
+      </div>
+    );
+  };
 
 function JoinedEvents() {
   const [search, setSearch] = useState("");
