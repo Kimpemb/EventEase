@@ -64,6 +64,7 @@ const CreateEventPage = () => {
         message: `Your event "${title}" has been successfully created!`,
         timestamp: new Date(),
         read: false,
+        eventId, // Include eventId in the notification
       });
 
       setSuccess("Event created successfully!");

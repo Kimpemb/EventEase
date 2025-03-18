@@ -207,7 +207,7 @@ function PastEvents() {
                   Clear Filters
                 </button>
               ) : (
-                <p>You haven't attended any events yet that have ended.</p>
+            <p>You haven&apos;t attended any events yet that have ended.</p>
               )}
             </div>
           ) : (
