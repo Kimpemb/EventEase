@@ -6,9 +6,10 @@ import { deleteDoc, doc, collection, onSnapshot, updateDoc } from "firebase/fire
 import { query, orderBy } from "firebase/firestore";
 import styles from "../styles/dashboard.module.css";
 import { useEvents } from "../hooks/useEvents";
-import NotificationIcon from "../components/NotificationIcon"; // Updated import
-import NotificationDropdown from "../components/NotificationDropdown"; // Updated import
-import NotificationMobileOverlay from "../components/NotificationMobileOverlay"; // Updated import
+import NotificationIcon from "../components/NotificationIcon";
+import NotificationDropdown from "../components/NotificationDropdown";
+import NotificationMobileOverlay from "../components/NotificationMobileOverlay";
+import { notifyOrganizer } from "../firebase/notificationAPI";
 
 const categories = [
   "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
@@ -33,11 +34,11 @@ const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
       {!isOrganizer && event.status === "Upcoming" && (
         <div className={styles.buttonContainer}>
           {isParticipant ? (
-            <button onClick={() => onLeave(event.id)} className={styles.leaveButton}>
+            <button onClick={() => onLeave(event)} className={styles.leaveButton}>
               Leave Event
             </button>
           ) : (
-            <button onClick={() => onJoin(event.id)} className={styles.joinButton}>
+            <button onClick={() => onJoin(event)} className={styles.joinButton}>
               Join Event
             </button>
           )}
@@ -152,15 +153,25 @@ function Dashboard() {
   };
 
   // Handle joining an event
-  const handleEventJoin = async (eventId) => {
-    const success = await handleJoinEvent(eventId);
-    if (success) refreshEvents();
+  const handleEventJoin = async (event) => {
+    const success = await handleJoinEvent(event.id);
+    if (success) {
+      // Notify the organizer
+      const participantName = user?.displayName || user?.email;
+      await notifyOrganizer(event.userId, event.id, participantName, "joined");
+      refreshEvents();
+    }
   };
 
   // Handle leaving an event
-  const handleEventLeave = async (eventId) => {
-    const success = await handleLeaveEvent(eventId);
-    if (success) refreshEvents();
+  const handleEventLeave = async (event) => {
+    const success = await handleLeaveEvent(event.id);
+    if (success) {
+      // Notify the organizer
+      const participantName = user?.displayName || user?.email;
+      await notifyOrganizer(event.userId, event.id, participantName, "left");
+      refreshEvents();
+    }
   };
 
   // Handle deleting an event
@@ -251,12 +262,12 @@ function Dashboard() {
               ))}
             </select>
 
-            <Link href="/create-event">
-              <button className={styles.menuButton}>Create Event</button>
+            <Link href="/create-event" legacyBehavior>
+              <a className={styles.menuButton}>Create Event</a>
             </Link>
 
-            <Link href="/events">
-              <button className={styles.menuButton}>View All Events</button>
+            <Link href="/events" legacyBehavior>
+              <a className={styles.menuButton}>View All Events</a>
             </Link>
 
             <span className={styles.username}>{user?.displayName || user?.email}</span>
@@ -321,12 +332,12 @@ function Dashboard() {
               ))}
             </select>
 
-            <Link href="/create-event">
-              <button className={styles.menuButton}>Create Event</button>
+            <Link href="/create-event" legacyBehavior>
+              <a className={styles.menuButton}>Create Event</a>
             </Link>
 
-            <Link href="/events">
-              <button className={styles.menuButton}>View All Events</button>
+            <Link href="/events" legacyBehavior>
+              <a className={styles.menuButton}>View All Events</a>
             </Link>
 
             <span className={styles.username}>{user?.displayName || user?.email}</span>
@@ -379,7 +390,7 @@ function Dashboard() {
             </div>
           )}
           {filteredUpcomingEvents.length > 3 && (
-            <Link href="/events">
+            <Link href="/events" legacyBehavior>
               <a className={styles.viewMore}>View More...</a>
             </Link>
           )}
@@ -405,8 +416,8 @@ function Dashboard() {
             </div>
           )}
           {joinedEvents.length > 3 && (
-            <Link href="/joined-events" className={styles.viewMore}>
-              View All Joined Events...
+            <Link href="/joined-events" legacyBehavior>
+              <a className={styles.viewMore}>View All Joined Events...</a>
             </Link>
           )}
         </section>
@@ -431,8 +442,8 @@ function Dashboard() {
             </div>
           )}
           {pastEvents.length > 3 && (
-            <Link href="/past-events" className={styles.viewMore}>
-              View All Past Events...
+            <Link href="/past-events" legacyBehavior>
+              <a className={styles.viewMore}>View All Past Events...</a>
             </Link>
           )}
         </section>

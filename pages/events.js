@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getEvents, joinEvent, leaveEvent, getEventParticipants } from "../firebase/firebaseEvents";
 import { auth } from "../firebase/firebaseConfig";
+import { notifyOrganizer } from "../firebase/notificationAPI"; // Import notifyOrganizer
 import styles from "../styles/Events.module.css";
 
 const categories = [

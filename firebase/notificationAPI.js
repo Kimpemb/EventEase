@@ -1,4 +1,4 @@
-// firebase/notificationAPI.js
+// /firebase/notificationAPI.js
 import { db } from "./firebaseConfig";
 import { 
   collection, 
@@ -14,19 +14,9 @@ import {
   getDocs
 } from "firebase/firestore";
 
-/**
- * Send a notification to a specific user
- * @param {string} userId - The recipient's user ID
- * @param {Object} notification - The notification object
- * @param {string} notification.type - Type of notification (event_created, event_joined, etc.)
- * @param {string} notification.message - The notification message
- * @param {string} [notification.eventId] - Optional related event ID
- * @param {string} [notification.channel="in-app"] - Delivery channel (in-app, email, sms)
- * @returns {Promise<string>} - The notification document ID
- */
+// Send a notification to a specific user
 export const sendNotification = async (userId, notification) => {
   try {
-    // Default notification object structure
     const notificationData = {
       type: notification.type,
       message: notification.message,
@@ -36,7 +26,6 @@ export const sendNotification = async (userId, notification) => {
       ...(notification.eventId && { eventId: notification.eventId }),
     };
 
-    // Add notification to user's collection
     const docRef = await addDoc(
       collection(db, "users", userId, "notifications"),
       notificationData
@@ -49,42 +38,43 @@ export const sendNotification = async (userId, notification) => {
   }
 };
 
-/**
- * Mark a notification as read
- * @param {string} userId - The user ID
- * @param {string} notificationId - The notification document ID
- * @returns {Promise<void>}
- */
+// Notify the event organizer
+export const notifyOrganizer = async (organizerId, eventId, participantName, action) => {
+  try {
+    const message = `${participantName} has ${action} your event.`;
+    await sendNotification(organizerId, {
+      type: "participant_update",
+      message,
+      eventId
+    });
+  } catch (error) {
+    console.error("Error notifying organizer:", error);
+    throw error;
+  }
+};
+
+// Mark a notification as read
 export const markNotificationAsRead = async (userId, notificationId) => {
   try {
     const notificationRef = doc(db, "users", userId, "notifications", notificationId);
-    await updateDoc(notificationRef, {
-      read: true
-    });
+    await updateDoc(notificationRef, { read: true });
   } catch (error) {
     console.error("Error marking notification as read:", error);
     throw error;
   }
 };
 
-/**
- * Mark all user's notifications as read
- * @param {string} userId - The user ID
- * @returns {Promise<void>}
- */
+// Mark all notifications as read
 export const markAllNotificationsAsRead = async (userId) => {
   try {
     const notificationsRef = collection(db, "users", userId, "notifications");
     const unreadQuery = query(notificationsRef, where("read", "==", false));
     
     const querySnapshot = await getDocs(unreadQuery);
-    
-    // Create array of promises for batch update
     const updatePromises = querySnapshot.docs.map(doc => 
       updateDoc(doc.ref, { read: true })
     );
     
-    // Execute all updates
     await Promise.all(updatePromises);
   } catch (error) {
     console.error("Error marking all notifications as read:", error);
@@ -92,12 +82,7 @@ export const markAllNotificationsAsRead = async (userId) => {
   }
 };
 
-/**
- * Delete a notification
- * @param {string} userId - The user ID
- * @param {string} notificationId - The notification document ID
- * @returns {Promise<void>}
- */
+// Delete a notification
 export const deleteNotification = async (userId, notificationId) => {
   try {
     await deleteDoc(doc(db, "users", userId, "notifications", notificationId));
@@ -107,11 +92,7 @@ export const deleteNotification = async (userId, notificationId) => {
   }
 };
 
-/**
- * Delete all notifications for a user
- * @param {string} userId - The user ID
- * @returns {Promise<void>}
- */
+// Clear all notifications for a user
 export const clearAllNotifications = async (userId) => {
   try {
     const notificationsRef = collection(db, "users", userId, "notifications");
@@ -128,12 +109,7 @@ export const clearAllNotifications = async (userId) => {
   }
 };
 
-/**
- * Subscribe to real-time notification updates
- * @param {string} userId - The user ID
- * @param {function} callback - Callback function that receives notifications array
- * @returns {function} - Unsubscribe function
- */
+// Subscribe to real-time notifications
 export const subscribeToNotifications = (userId, callback) => {
   if (!userId) return () => {};
   
@@ -144,7 +120,6 @@ export const subscribeToNotifications = (userId, callback) => {
     const notifications = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      // Convert Firestore timestamp to JS Date if needed
       timestamp: doc.data().timestamp?.toDate() || new Date(),
     }));
     

@@ -1,0 +1,39 @@
+/* styles/viewAllNotifications.module.css */
+.container {
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .actions button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #0070f3;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .actions button:hover {
+    background-color: #005bb5;
+  }
+  
+  .notificationList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
