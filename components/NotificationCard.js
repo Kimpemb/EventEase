@@ -4,26 +4,38 @@ import { useNotifications } from '../hooks/useNotifications';
 import styles from '../styles/notificationCard.module.css';
 
 const NotificationCard = ({ notification, icon }) => {
-  const router = useRouter();
-  const { markAsRead, removeNotification } = useNotifications();
-
-  // Map notification types to emojis or icons
-  const getIconForType = (type) => {
-    switch (type) {
-      case 'event_updated':
-        return '🔄';
-      case 'event_canceled':
-        return '❌';
-      case 'joined':
-        return '🎉';
-      case 'left':
-        return '👋';
-      case 'donation_received':
-        return '💰';
-      default:
-        return '🔔';
-    }
-  };
+    const router = useRouter();
+    const { markAsRead, removeNotification } = useNotifications();
+  
+    // Disable ESLint for the unused `icon` prop
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const unusedIcon = icon; // Temporarily store the icon prop
+  
+    // Map notification types to emojis or icons
+    const getIconForType = (type) => {
+      switch (type) {
+        case 'event_updated':
+          return '🔄';
+        case 'event_canceled':
+          return '❌';
+        case 'joined':
+          return '🎉';
+        case 'left':
+          return '👋';
+        case 'donation_received':
+          return '💰';
+        default:
+          return '🔔';
+      }
+    };
+    return (
+        <div>
+          <h2>{notification.title}</h2>
+          <p>{notification.message}</p>
+          <span>{icon || getIconForType(notification.type)}</span>
+        </div>
+      );
+      
 
   // Format timestamp
   const formatTime = (timestamp) => {

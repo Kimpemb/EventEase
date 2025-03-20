@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { auth, db } from "../firebase/firebaseConfig";
-import { deleteDoc, doc, collection, onSnapshot, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, collection, onSnapshot, updateDoc, addDoc } from "firebase/firestore";
 import { query, orderBy } from "firebase/firestore";
 import styles from "../styles/dashboard.module.css";
 import { useEvents } from "../hooks/useEvents";
@@ -10,11 +10,6 @@ import NotificationIcon from "../components/NotificationIcon";
 import NotificationDropdown from "../components/NotificationDropdown";
 import NotificationMobileOverlay from "../components/NotificationMobileOverlay";
 import { notifyOrganizer } from "../firebase/notificationAPI";
-import DonationModal from "../components/DonationModal"; // Import the DonationModal component
-
-const categories = [
-  "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
-];
 
 // EventCard Component
 const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
@@ -59,7 +54,7 @@ const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
   );
 };
 
-function Dashboard() {
+const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -68,8 +63,11 @@ function Dashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
-  const [showDonationModal, setShowDonationModal] = useState(false); // State for donation modal
   const router = useRouter();
+
+  const categories = [
+    "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
+  ];
 
   // Use the custom hook to manage events
   const { 
@@ -82,6 +80,118 @@ function Dashboard() {
     handleLeaveEvent,
     refreshEvents
   } = useEvents();
+
+  // Load Paystack script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.async = true;
+    document.body.appendChild(script);
+    
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  // Handle donation with Paystack
+  const handleDonate = () => {
+    if (!window.PaystackPop) {
+      alert("Paystack payment system is loading. Please try again.");
+      return;
+    }
+    
+    // Ask user for donation amount with labels
+    const amountOptions = [
+      { value: 10, label: "GH₵10 - Small Contribution" },
+      { value: 20, label: "GH₵20 - Most Popular" }, // Most Popular Label
+      { value: 50, label: "GH₵50 - Generous Support" },
+      { value: 100, label: "GH₵100 - Best Value" },  // Best Value Label
+      { value: 0, label: "Other amount" }
+    ];
+    
+    let selectedOption = window.prompt(
+      `Select a donation amount:\n${amountOptions.map((opt, i) => `${i+1}. ${opt.label}`).join('\n')}`,
+      "2"  // Defaulting to "Most Popular" selection
+    );
+    
+    if (!selectedOption) return; // User cancelled
+    
+    const optionIndex = parseInt(selectedOption) - 1;
+    let amount;
+    
+    if (optionIndex >= 0 && optionIndex < amountOptions.length) {
+      amount = amountOptions[optionIndex].value;
+      
+      // If "Other amount" was selected
+      if (amount === 0) {
+        const customAmount = window.prompt("Enter your donation amount in GH₵:", "15");
+        if (!customAmount) return; // User cancelled
+        amount = parseFloat(customAmount);
+      }
+    } else {
+      alert("Invalid selection. Please try again.");
+      return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid donation amount greater than zero.");
+      return;
+    }
+    
+    // Initialize Paystack payment
+    const handler = window.PaystackPop.setup({
+      key: 'pk_live_1cab56dbfb1409c0e43bec76d8e86072a9ef86c6', // Your live Paystack public key
+      email: user?.email || '',
+      amount: amount * 100, // Amount in pesewas
+      currency: 'GHS',
+      ref: `donate_${new Date().getTime()}_${Math.floor(Math.random() * 10000)}`, // Generate a unique reference
+      metadata: {
+        custom_fields: [
+          {
+            display_name: "Donor Name",
+            variable_name: "donor_name",
+            value: user?.displayName || user?.email || "Anonymous"
+          },
+          {
+            display_name: "Donation For",
+            variable_name: "donation_for",
+            value: "EventEase Platform Support"
+          }
+        ]
+      },
+      callback: function(response) {
+        // This runs after successful payment
+        alert(`Thank you for your donation of GH₵${amount}! Your support helps us improve EventEase.`);
+        
+        // Save donation record to Firebase
+        saveDonationToDatabase(user.uid, amount, response.reference);
+      },
+      onClose: function() {
+        console.log('Donation window closed');
+      }
+    });
+    handler.openIframe();
+  };
+
+  // Function to save donation to database
+  const saveDonationToDatabase = async (userId, amount, reference) => {
+    try {
+      await addDoc(collection(db, "donations"), {
+        userId: userId,
+        userEmail: user?.email,
+        userName: user?.displayName || null,
+        amount: amount,
+        reference: reference,
+        currency: "GHS",
+        status: "completed",
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error("Error saving donation:", error);
+    }
+  };
 
   // Fetch notifications from Firestore
   useEffect(() => {
@@ -188,18 +298,6 @@ function Dashboard() {
     }
   };
 
-  // Toggle donation modal
-  const toggleDonationModal = () => {
-    setShowDonationModal(!showDonationModal);
-  };
-
-  // Handle donation submission
-  const handleDonationSubmit = async (donationData) => {
-    // This will be implemented in the DonationModal component
-    console.log("Donation submitted:", donationData);
-    setShowDonationModal(false);
-  };
-
   // Filter events based on search and category
   const filteredUpcomingEvents = upcomingEvents.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
@@ -286,7 +384,7 @@ function Dashboard() {
 
             {/* Donation Button */}
             <button 
-              onClick={toggleDonationModal} 
+              onClick={handleDonate} 
               className={`${styles.menuButton} ${styles.donateButton}`}
             >
               Donate
@@ -364,7 +462,7 @@ function Dashboard() {
 
             {/* Mobile Donation Button */}
             <button 
-              onClick={toggleDonationModal} 
+              onClick={handleDonate}
               className={`${styles.menuButton} ${styles.donateButton}`}
             >
               Donate
@@ -488,15 +586,6 @@ function Dashboard() {
           />
         )}
 
-        {/* Donation Modal */}
-        {showDonationModal && (
-          <DonationModal
-            onClose={toggleDonationModal}
-            onSubmit={handleDonationSubmit}
-            user={user}
-          />
-        )}
-
         {/* Profile & Settings */}
         <section className={styles.profileSettings}>
           <h2>👤 Profile & Settings</h2>
@@ -530,6 +619,6 @@ function Dashboard() {
       </div>
     </div>
   );
-}
+};
 
 export default Dashboard;

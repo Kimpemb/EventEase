@@ -84,8 +84,8 @@ const NotificationMobileOverlay = ({ onClose }) => {
       <div className={styles.notificationList}>
         {notifications.length === 0 ? (
           <div className={styles.emptyState}>
-            <p>No notifications yet. You're all caught up! 😊</p>
-          </div>
+            <p>No notifications yet. You&apos;re all caught up! 😊</p> 
+         </div>
         ) : (
           notifications.map(notification => (
             <NotificationCard 
