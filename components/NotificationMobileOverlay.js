@@ -2,35 +2,33 @@
 import { useNotifications } from '../hooks/useNotifications';
 import NotificationCard from './NotificationCard';
 import styles from '../styles/notificationMobileOverlay.module.css';
+import { useMemo } from 'react';
 
 const NotificationMobileOverlay = ({ onClose }) => {
   const { 
     notifications, 
     unreadCount, 
     loading,
-
     markAllAsRead,
-    clearAll
+    clearAllNotifications
   } = useNotifications();
   
-  // Get notification icon based on type
-  const getNotificationIcon = (type) => {
-    const icons = {
-      'event_created': '🎉',
-      'event_joined': '👋',
-      'event_reminder': '⏰',
-      'event_updated': '📝',
-      'event_canceled': '❌',
-      'welcome': '👋',
-      'system': '⚙️',
-      'login_success': '🔑',
-      'email_verification_sent': '✉️',
-      'email_verification_reminder': '📧'
-    };
-    
-    return icons[type] || '🔔';
-  };
-  
+  // Memoize the icons to avoid unnecessary re-renders
+  const notificationIcons = useMemo(() => ({
+    'event_created': '🎉',
+    'event_joined': '👋',
+    'event_reminder': '⏰',
+    'event_updated': '📝',
+    'event_canceled': '❌',
+    'welcome': '👋',
+    'system': '⚙️',
+    'login_success': '🔑',
+    'email_verification_sent': '✉️',
+    'email_verification_reminder': '📧'
+  }), []);
+
+  const getNotificationIcon = (type) => notificationIcons[type] || '🔔';
+
   if (loading) {
     return (
       <div className={styles.overlay}>
@@ -69,22 +67,24 @@ const NotificationMobileOverlay = ({ onClose }) => {
           className={styles.actionButton}
           onClick={markAllAsRead}
           disabled={unreadCount === 0}
+          aria-label="Mark all notifications as read"
         >
-          Mark all read
+          Mark all as Read
         </button>
         <button 
           className={styles.actionButton}
-          onClick={clearAll}
+          onClick={clearAllNotifications}
           disabled={notifications.length === 0}
+          aria-label="Clear all notifications"
         >
-          Clear all
+          Clear All
         </button>
       </div>
       
       <div className={styles.notificationList}>
         {notifications.length === 0 ? (
           <div className={styles.emptyState}>
-            <p>No notifications</p>
+            <p>No notifications yet. You're all caught up! 😊</p>
           </div>
         ) : (
           notifications.map(notification => (

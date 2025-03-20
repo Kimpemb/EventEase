@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { getEvents, joinEvent, leaveEvent, getEventParticipants } from "../firebase/firebaseEvents";
+import { getEvents, joinEvent, leaveEvent, getEventParticipants, updateEvent, cancelEvent } from "../firebase/firebaseEvents";
 import { auth } from "../firebase/firebaseConfig";
-import { notifyOrganizer } from "../firebase/notificationAPI"; // Import notifyOrganizer
+import { notifyOrganizer } from "../firebase/notificationAPI";
 import styles from "../styles/Events.module.css";
 
 const categories = [
@@ -56,15 +56,15 @@ const EventsPage = () => {
       alert("You have already joined this event.");
       return;
     }
-  
+
     try {
       await joinEvent(event.id);
       alert("You have successfully joined the event!");
-  
+
       // Notify the organizer
       const participantName = user.displayName || user.email;
       await notifyOrganizer(event.userId, event.id, participantName, "joined");
-  
+
       // Update local state
       setEvents((prevEvents) =>
         prevEvents.map((e) =>
@@ -93,15 +93,15 @@ const EventsPage = () => {
       alert("You are not a participant of this event.");
       return;
     }
-  
+
     try {
       await leaveEvent(event.id);
       alert("You have successfully left the event!");
-  
+
       // Notify the organizer
       const participantName = user.displayName || user.email;
       await notifyOrganizer(event.userId, event.id, participantName, "left");
-  
+
       // Update local state
       setEvents((prevEvents) =>
         prevEvents.map((e) =>
@@ -113,6 +113,32 @@ const EventsPage = () => {
     } catch (err) {
       console.error("Error leaving event:", err);
       alert(err.message || "Failed to leave event. Please try again later.");
+    }
+  };
+
+  const handleUpdateEvent = async (eventId, updatedEventData) => {
+    try {
+      await updateEvent(eventId, updatedEventData);
+      alert("Event updated successfully!");
+      // Refresh events list
+      const updatedEvents = await getEvents();
+      setEvents(updatedEvents);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      alert("Failed to update event. Please try again.");
+    }
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      await cancelEvent(eventId);
+      alert("Event canceled successfully!");
+      // Refresh events list
+      const updatedEvents = await getEvents();
+      setEvents(updatedEvents);
+    } catch (error) {
+      console.error("Error canceling event:", error);
+      alert("Failed to cancel event. Please try again.");
     }
   };
 
@@ -183,6 +209,22 @@ const EventsPage = () => {
                         Join Event
                       </button>
                     )}
+                  </div>
+                )}
+                {auth.currentUser && auth.currentUser.uid === event.userId && (
+                  <div className={styles.buttonContainer}>
+                    <button
+                      onClick={() => handleUpdateEvent(event.id, { title: "Updated Title" })}
+                      className={styles.updateButton}
+                    >
+                      Update Event
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEvent(event.id)}
+                      className={styles.deleteButton}
+                    >
+                      Cancel Event
+                    </button>
                   </div>
                 )}
               </div>

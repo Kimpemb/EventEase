@@ -28,6 +28,47 @@ const validateEvent = async (eventId) => {
   return { eventRef, eventData: eventSnap.data() };
 };
 
+// Function to send a notification to a user
+export const sendNotification = async (userId, notification) => {
+  try {
+    await addDoc(collection(db, "users", userId, "notifications"), notification);
+    console.log(`Notification sent to user ${userId}:`, notification); // Debugging log
+  } catch (error) {
+    console.error("Error sending notification:", error); // Debugging log
+    throw new Error("Failed to send notification: " + error.message);
+  }
+};
+
+// Function to send notifications to all participants of an event
+export const sendNotificationToUsers = async (eventId, type, message) => {
+  try {
+    const participants = await getEventParticipants(eventId);
+    console.log(`Participants for event ${eventId}:`, participants); // Debugging log
+
+    if (participants.length === 0) {
+      console.log("No participants to notify."); // Debugging log
+      return;
+    }
+
+    await Promise.all(
+      participants.map(async (userId) => {
+        console.log(`Sending notification to user ${userId}`); // Debugging log
+        await sendNotification(userId, {
+          type,
+          message,
+          eventId,
+          timestamp: serverTimestamp(),
+        });
+      })
+    );
+
+    console.log(`Notifications sent to participants for event ${eventId}`); // Debugging log
+  } catch (error) {
+    console.error("Error sending notifications:", error); // Debugging log
+    throw new Error("Failed to send notifications. Please try again.");
+  }
+};
+
 // Function to create an event in Firestore
 export const createEvent = async (eventData) => {
   try {
@@ -43,20 +84,11 @@ export const createEvent = async (eventData) => {
       createdAt: serverTimestamp(),
     });
 
-    console.log("Event created with ID:", docRef.id);
+    console.log("Event created with ID:", docRef.id); // Debugging log
     return docRef.id;
   } catch (error) {
-    console.error("Error creating event:", error);
+    console.error("Error creating event:", error); // Debugging log
     throw new Error("Failed to create event. Please try again.");
-  }
-};
-
-// Function to send a notification to a user
-export const sendNotification = async (userId, notification) => {
-  try {
-    await addDoc(collection(db, "users", userId, "notifications"), notification);
-  } catch (error) {
-    throw new Error("Failed to send notification: " + error.message);
   }
 };
 
@@ -87,7 +119,7 @@ export const getEvents = async () => {
 
     return eventsList;
   } catch (error) {
-    console.error("Error fetching events:", error);
+    console.error("Error fetching events:", error); // Debugging log
     throw new Error("Failed to fetch events. Please try again.");
   }
 };
@@ -99,7 +131,7 @@ export const getOrganizerEvents = async (organizerId) => {
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-    console.error("Error fetching organizer events:", error);
+    console.error("Error fetching organizer events:", error); // Debugging log
     throw new Error("Failed to fetch organizer events. Please try again.");
   }
 };
@@ -108,16 +140,16 @@ export const getOrganizerEvents = async (organizerId) => {
 export const getUserJoinedEvents = async (userId) => {
   try {
     if (!userId) throw new Error("User ID is required");
-    
+
     const q = query(
-      collection(db, "events"), 
+      collection(db, "events"),
       where("participants", "array-contains", userId)
     );
-    
+
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-    console.error("Error fetching joined events:", error);
+    console.error("Error fetching joined events:", error); // Debugging log
     throw new Error("Failed to fetch joined events. Please try again.");
   }
 };
@@ -128,7 +160,7 @@ export const getEventById = async (eventId) => {
     const { eventData } = await validateEvent(eventId);
     return { id: eventId, ...eventData };
   } catch (error) {
-    console.error("Error fetching event details:", error);
+    console.error("Error fetching event details:", error); // Debugging log
     throw new Error("Failed to fetch event details. Please try again.");
   }
 };
@@ -159,7 +191,7 @@ export const joinEvent = async (eventId) => {
       event: eventDoc.data(),
     };
   } catch (error) {
-    console.error("Error joining event:", error);
+    console.error("Error joining event:", error); // Debugging log
     return {
       success: false,
       message: error.message,
@@ -206,7 +238,7 @@ export const leaveEvent = async (eventId) => {
       message: "Successfully left the event.",
     };
   } catch (error) {
-    console.error("Error leaving event:", error);
+    console.error("Error leaving event:", error); // Debugging log
     return {
       success: false,
       message: error.message || "Failed to leave event. Please try again.",
@@ -219,16 +251,65 @@ export const updateEventStatus = async (eventId, status) => {
   try {
     const eventRef = doc(db, "events", eventId);
     await updateDoc(eventRef, { status });
-    console.log(`Event ${eventId} updated to ${status}`);
+
+    // Notify participants if the event is canceled
+    if (status === "Canceled") {
+      await sendNotificationToUsers(eventId, "event_canceled", "The event has been canceled.");
+    }
+
+    console.log(`Event ${eventId} updated to ${status}`); // Debugging log
   } catch (error) {
-    console.error("Error updating event status:", error);
+    console.error("Error updating event status:", error); // Debugging log
     throw new Error("Failed to update event status. Please try again.");
+  }
+};
+
+// Function to update event details
+export const updateEvent = async (eventId, updatedEventData) => {
+  try {
+    console.log(`Updating event ${eventId} with data:`, updatedEventData); // Debugging log
+
+    // Validate event existence
+    const { eventRef } = await validateEvent(eventId);
+    console.log("Event exists and is valid:", eventRef.id); // Debugging log
+
+    // Update event in Firestore
+    await updateDoc(eventRef, updatedEventData);
+    console.log("Event updated in Firestore"); // Debugging log
+
+    // Notify participants about the update
+    console.log(`Notifying participants of event ${eventId}`); // Debugging log
+    await sendNotificationToUsers(eventId, "event_updated", "The event details have been updated.");
+
+    console.log(`Event ${eventId} updated successfully`); // Debugging log
+  } catch (error) {
+    console.error("Error updating event:", error); // Debugging log
+    throw new Error("Failed to update event. Please try again.");
   }
 };
 
 // Function to cancel an event
 export const cancelEvent = async (eventId) => {
-  return updateEventStatus(eventId, "Canceled");
+  try {
+    console.log(`Canceling event ${eventId}`); // Debugging log
+
+    // Validate event existence
+    const { eventRef } = await validateEvent(eventId);
+    console.log("Event exists and is valid:", eventRef.id); // Debugging log
+
+    // Update event status to "Canceled"
+    await updateDoc(eventRef, { status: "Canceled" });
+    console.log("Event status updated to 'Canceled'"); // Debugging log
+
+    // Notify participants about the cancellation
+    console.log(`Notifying participants of event ${eventId}`); // Debugging log
+    await sendNotificationToUsers(eventId, "event_canceled", "The event has been canceled.");
+
+    console.log(`Event ${eventId} canceled successfully`); // Debugging log
+  } catch (error) {
+    console.error("Error canceling event:", error); // Debugging log
+    throw new Error("Failed to cancel event. Please try again.");
+  }
 };
 
 // Function to get participants for an event
@@ -237,7 +318,7 @@ export const getEventParticipants = async (eventId) => {
     const { eventData } = await validateEvent(eventId);
     return eventData.participants || [];
   } catch (error) {
-    console.error("Error fetching participants:", error);
+    console.error("Error fetching participants:", error); // Debugging log
     return [];
   }
 };
@@ -261,7 +342,7 @@ export const getEventParticipantsDetails = async (eventId) => {
           return {
             id: participantId,
             email: userData.email || "Unknown Email",
-            username: userData.displayName || "Unknown User"
+            username: userData.displayName || "Unknown User",
           };
         }
         return { id: participantId, email: "Unknown Email", username: "Unknown User" };
@@ -270,7 +351,7 @@ export const getEventParticipantsDetails = async (eventId) => {
 
     return participantDetails;
   } catch (error) {
-    console.error("Error fetching participant details:", error);
+    console.error("Error fetching participant details:", error); // Debugging log
     return [];
   }
 };
