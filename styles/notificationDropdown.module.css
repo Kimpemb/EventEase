@@ -1,0 +1,71 @@
+.dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 300px;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .actionButton {
+    background: none;
+    border: none;
+    color: #0070f3;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+  
+  .actionButton:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .notificationList {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+  
+  .emptyState {
+    text-align: center;
+    padding: 1rem;
+    color: #666;
+  }
+  
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-top: 1px solid #e0e0e0;
+  }
+  
+  .viewAllLink {
+    color: #0070f3;
+    text-decoration: none;
+  }
+  
+  .clearButton {
+    background: none;
+    border: none;
+    color: #ff4d4f;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+  
+  .loadingSpinner {
+    text-align: center;
+    padding: 1rem;
+    color: #666;
+  }

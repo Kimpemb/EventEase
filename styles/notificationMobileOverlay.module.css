@@ -1,0 +1,70 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    z-index: 1000;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .closeButton {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+  
+  .actionButton {
+    background: none;
+    border: none;
+    color: #0070f3;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+  
+  .actionButton:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .notificationList {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .emptyState {
+    text-align: center;
+    padding: 1rem;
+    color: #666;
+  }
+  
+  .footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem;
+    border-top: 1px solid #e0e0e0;
+  }
+  
+  .clearButton {
+    background: none;
+    border: none;
+    color: #ff4d4f;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+  
+  .loadingSpinner {
+    text-align: center;
+    padding: 1rem;
+    color: #666;
+  }

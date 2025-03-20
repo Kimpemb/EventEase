@@ -1,19 +1,17 @@
-import Link from 'next/link';
+// components/NotificationMobileOverlay.js
 import { useNotifications } from '../hooks/useNotifications';
 import NotificationCard from './NotificationCard';
-import styles from '../styles/notificationDropdown.module.css';
+import styles from '../styles/notificationMobileOverlay.module.css';
 
-const NotificationDropdown = ({ onClose }) => {
+const NotificationMobileOverlay = ({ onClose }) => {
   const { 
     notifications, 
-    unreadCount,
-    loading, 
+    unreadCount, 
+    loading,
+
     markAllAsRead,
     clearAll
   } = useNotifications();
-  
-  // Show only most recent 5 notifications in dropdown
-  const recentNotifications = notifications.slice(0, 5);
   
   // Get notification icon based on type
   const getNotificationIcon = (type) => {
@@ -33,31 +31,53 @@ const NotificationDropdown = ({ onClose }) => {
     return icons[type] || '🔔';
   };
   
-  const handleMarkAllAsRead = async () => {
-    await markAllAsRead();
-  };
-  
   if (loading) {
     return (
-      <div className={styles.dropdown}>
+      <div className={styles.overlay}>
         <div className={styles.header}>
-          <h3>Notifications</h3>
+          <button 
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Close notifications"
+          >
+            ×
+          </button>
+          <h2>Notifications</h2>
         </div>
-        <div className={styles.loadingSpinner}>Loading...</div>
+        <div className={styles.loadingContainer}>
+          <div className={styles.loadingSpinner}>Loading...</div>
+        </div>
       </div>
     );
   }
   
   return (
-    <div className={styles.dropdown}>
+    <div className={styles.overlay}>
       <div className={styles.header}>
-        <h3>Notifications {unreadCount > 0 && `(${unreadCount})`}</h3>
+        <button 
+          className={styles.closeButton}
+          onClick={onClose}
+          aria-label="Close notifications"
+        >
+          ×
+        </button>
+        <h2>Notifications {unreadCount > 0 && `(${unreadCount})`}</h2>
+      </div>
+      
+      <div className={styles.actions}>
         <button 
           className={styles.actionButton}
-          onClick={handleMarkAllAsRead}
+          onClick={markAllAsRead}
           disabled={unreadCount === 0}
         >
           Mark all read
+        </button>
+        <button 
+          className={styles.actionButton}
+          onClick={clearAll}
+          disabled={notifications.length === 0}
+        >
+          Clear all
         </button>
       </div>
       
@@ -67,7 +87,7 @@ const NotificationDropdown = ({ onClose }) => {
             <p>No notifications</p>
           </div>
         ) : (
-          recentNotifications.map(notification => (
+          notifications.map(notification => (
             <NotificationCard 
               key={notification.id}
               notification={notification}
@@ -76,24 +96,8 @@ const NotificationDropdown = ({ onClose }) => {
           ))
         )}
       </div>
-      
-      <div className={styles.footer}>
-        {/* Fixed <Link> usage */}
-        <Link 
-          href="/notifications" 
-          className={styles.viewAllLink} 
-          onClick={onClose}
-        >
-          View all
-        </Link>
-        {notifications.length > 0 && (
-          <button className={styles.clearButton} onClick={clearAll}>
-            Clear all
-          </button>
-        )}
-      </div>
     </div>
   );
 };
 
-export default NotificationDropdown;
+export default NotificationMobileOverlay;

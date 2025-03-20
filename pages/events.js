@@ -55,10 +55,16 @@ const EventsPage = () => {
       alert("You have already joined this event.");
       return;
     }
-
+  
     try {
       await joinEvent(event.id);
       alert("You have successfully joined the event!");
+  
+      // Notify the organizer
+      const participantName = user.displayName || user.email;
+      await notifyOrganizer(event.userId, event.id, participantName, "joined");
+  
+      // Update local state
       setEvents((prevEvents) =>
         prevEvents.map((e) =>
           e.id === event.id
@@ -86,10 +92,16 @@ const EventsPage = () => {
       alert("You are not a participant of this event.");
       return;
     }
-
+  
     try {
       await leaveEvent(event.id);
       alert("You have successfully left the event!");
+  
+      // Notify the organizer
+      const participantName = user.displayName || user.email;
+      await notifyOrganizer(event.userId, event.id, participantName, "left");
+  
+      // Update local state
       setEvents((prevEvents) =>
         prevEvents.map((e) =>
           e.id === event.id
