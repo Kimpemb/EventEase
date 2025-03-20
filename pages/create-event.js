@@ -1,93 +1,186 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import dynamic from "next/dynamic"; // Import dynamic from Next.js
 import { auth } from "../firebase/firebaseConfig";
-import { createEvent, sendNotification } from "../firebase/firebaseEvents"; // Import sendNotification
+import { createEvent, sendNotification } from "../firebase/firebaseEvents";
 import styles from "../styles/createEvent.module.css";
 
+// Dynamically import LocationPicker to avoid SSR issues
+const LocationPicker = dynamic(() => import("../components/LocationPicker"), {
+  ssr: false, // Disable server-side rendering
+});
+
 const CreateEventPage = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("General");
+  // State for form data
+  const [eventData, setEventData] = useState({
+    title: "",
+    description: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+    location: null, // Initialize location as null
+    category: "General",
+  });
+
+  // UI states
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Auth state
+  const [user, setUser] = useState(null);
+
   const router = useRouter();
 
+  // Check authentication status on component mount
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+
+      if (!currentUser) {
+        // Redirect if not logged in
+        router.push("/login?redirect=create-event");
+      }
+    });
+
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, [router]);
+
+  // Handle form field changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEventData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Handle location selection from LocationPicker
+  const handleLocationSelect = (location) => {
+    setEventData((prev) => ({
+      ...prev,
+      location, // location is an object: { address, lat, lng }
+    }));
+  };
+
+  // Validate event times
+  const validateEventTimes = () => {
+    const eventStart = new Date(`${eventData.date}T${eventData.startTime}`);
+    const eventEnd = new Date(`${eventData.date}T${eventData.endTime}`);
+    const now = new Date();
+
+    if (eventStart <= now) {
+      setError("Event start time must be in the future.");
+      return false;
+    }
+
+    if (eventEnd <= eventStart) {
+      setError("End time must be after the start time.");
+      return false;
+    }
+
+    return true;
+  };
+
+  // Validate form data
+  const validateForm = () => {
+    if (!eventData.title.trim()) {
+      setError("Event title is required");
+      return false;
+    }
+
+    if (!eventData.description.trim()) {
+      setError("Event description is required");
+      return false;
+    }
+
+    if (!eventData.date) {
+      setError("Event date is required");
+      return false;
+    }
+
+    if (!eventData.startTime || !eventData.endTime) {
+      setError("Event start and end times are required");
+      return false;
+    }
+
+    if (!validateEventTimes()) {
+      return false;
+    }
+
+    if (!eventData.location) {
+      setError("Please select an event location");
+      return false;
+    }
+
+    return true;
+  };
+
+  // Submit form handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setLoading(true);
 
-    const user = auth.currentUser;
+    // Check if user is logged in
     if (!user) {
       setError("You must be logged in to create an event.");
       setLoading(false);
       return;
     }
 
-    const eventStart = new Date(`${date}T${startTime}`);
-    const eventEnd = new Date(`${date}T${endTime}`);
-
-    if (eventStart <= new Date()) {
-      setError("Event start time must be in the future.");
-      setLoading(false);
-      return;
-    }
-
-    if (eventEnd <= eventStart) {
-      setError("End time must be after the start time.");
+    // Validate form data
+    if (!validateForm()) {
       setLoading(false);
       return;
     }
 
     try {
+      // Create the event in Firebase
       const eventId = await createEvent({
-        title,
-        description,
-        date,
-        startTime,
-        endTime,
-        location,
-        category,
+        ...eventData,
         userId: user.uid,
-        organizer: user.displayName || "Unknown Organizer",
+        organizer: user.displayName || user.email || "Unknown Organizer",
+        attendees: [user.uid], // Add creator as first attendee
       });
 
-      // Send a notification to the organizer
+      // Send confirmation notification to the organizer
       await sendNotification(user.uid, {
         type: "event_created",
-        message: `Your event "${title}" has been successfully created!`,
+        message: `Your event "${eventData.title}" has been successfully created!`,
         timestamp: new Date(),
         read: false,
-        eventId, // Include eventId in the notification
+        eventId,
       });
 
       setSuccess("Event created successfully!");
 
       // Reset form fields
-      setTitle("");
-      setDescription("");
-      setDate("");
-      setStartTime("");
-      setEndTime("");
-      setLocation("");
-      setCategory("General");
+      setEventData({
+        title: "",
+        description: "",
+        date: "",
+        startTime: "",
+        endTime: "",
+        location: null,
+        category: "General",
+      });
 
+      // Redirect to dashboard after a delay
       setTimeout(() => {
         router.push("/dashboard");
       }, 1500);
     } catch (err) {
-      setError(err.message);
+      console.error("Error creating event:", err);
+      setError(err.message || "Failed to create event. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Cancel button handler
   const handleCancel = () => {
     router.push("/dashboard");
   };
@@ -97,7 +190,11 @@ const CreateEventPage = () => {
       <div className={styles.formPanel}>
         <div className={styles.formHeader}>
           <h1 className={styles.formTitle}>Create Event</h1>
-          <button onClick={handleCancel} className={styles.cancelButton}>
+          <button
+            onClick={handleCancel}
+            className={styles.cancelButton}
+            type="button"
+          >
             Cancel
           </button>
         </div>
@@ -110,9 +207,10 @@ const CreateEventPage = () => {
             <label className={styles.inputLabel}>Event Title</label>
             <input
               type="text"
+              name="title"
               placeholder="Enter event title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={eventData.title}
+              onChange={handleChange}
               className={styles.textInput}
               required
             />
@@ -121,9 +219,10 @@ const CreateEventPage = () => {
           <div className={styles.formGroup}>
             <label className={styles.inputLabel}>Event Description</label>
             <textarea
+              name="description"
               placeholder="Describe your event"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={eventData.description}
+              onChange={handleChange}
               className={styles.textArea}
               rows="4"
               required
@@ -135,8 +234,9 @@ const CreateEventPage = () => {
               <label className={styles.inputLabel}>Date</label>
               <input
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                name="date"
+                value={eventData.date}
+                onChange={handleChange}
                 className={styles.dateInput}
                 required
               />
@@ -145,8 +245,9 @@ const CreateEventPage = () => {
               <label className={styles.inputLabel}>Start Time</label>
               <input
                 type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                name="startTime"
+                value={eventData.startTime}
+                onChange={handleChange}
                 className={styles.timeInput}
                 required
               />
@@ -155,8 +256,9 @@ const CreateEventPage = () => {
               <label className={styles.inputLabel}>End Time</label>
               <input
                 type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                name="endTime"
+                value={eventData.endTime}
+                onChange={handleChange}
                 className={styles.timeInput}
                 required
               />
@@ -164,22 +266,24 @@ const CreateEventPage = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.inputLabel}>Location</label>
-            <input
-              type="text"
-              placeholder="Event location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className={styles.textInput}
-              required
+            <label className={styles.inputLabel}>Event Location</label>
+            <LocationPicker
+              onLocationSelect={handleLocationSelect}
+              initialLocation={eventData.location}
             />
+            {!eventData.location && (
+              <p className={styles.helperText}>
+                Please select a location for your event
+              </p>
+            )}
           </div>
 
           <div className={styles.formGroup}>
             <label className={styles.inputLabel}>Category</label>
             <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              name="category"
+              value={eventData.category}
+              onChange={handleChange}
               className={styles.selectInput}
             >
               <option value="General">General</option>

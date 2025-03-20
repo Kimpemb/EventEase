@@ -40,3 +40,6 @@ a:hover {
   border-radius: 5px;
   cursor: pointer;
 }
+
+/* Leaflet Map CSS */
+@import "leaflet/dist/leaflet.css";

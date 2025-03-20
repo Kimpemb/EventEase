@@ -21,7 +21,8 @@ const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
     <div className={styles.eventCard}>
       <h3>{event.title}</h3>
       <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
-      <p>Location: {event.location}</p>
+      {/* Display location address correctly */}
+      <p>Location: {event.location?.address || "Location not specified"}</p>
       <p>Category: {event.category || "Uncategorized"}</p>
       <p>Organizer: {event.username || "Unknown"}</p>
       <p>Status: {event.status || "Upcoming"}</p>

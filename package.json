@@ -12,10 +12,13 @@
     "autoprefixer": "^10.4.21",
     "axios": "^1.8.4",
     "firebase": "^11.4.0",
+    "leaflet": "^1.9.4",
+    "leaflet-geosearch": "^3.8.0",
     "lucide-react": "^0.483.0",
     "next": "^15.2.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
     "react-toastify": "^11.0.5"
   },
   "devDependencies": {

@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getEvents, joinEvent, leaveEvent, getEventParticipants, updateEvent, cancelEvent } from "../firebase/firebaseEvents";
 import { auth } from "../firebase/firebaseConfig";
 import { notifyOrganizer } from "../firebase/notificationAPI";
 import styles from "../styles/Events.module.css";
+import LocationPicker from "./LocationPicker";
 
 const categories = [
-  "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
+  "General", "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
 ];
 
 const EventsPage = () => {
@@ -14,33 +15,44 @@ const EventsPage = () => {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [updateFormData, setUpdateFormData] = useState({
+    title: "",
+    description: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+    location: null,
+    category: ""
+  });
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const eventsList = await getEvents();
-        const updatedEvents = await Promise.all(
-          eventsList.map(async (event) => {
-            try {
-              const participantEmails = await getEventParticipants(event.id);
-              return { ...event, participantEmails };
-            } catch (participantError) {
-              console.error("Error fetching participants:", participantError);
-              return { ...event, participantEmails: [] };
-            }
-          })
-        );
-        setEvents(updatedEvents);
-      } catch (err) {
-        console.error("Error fetching events:", err);
-        setError("Failed to load events. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEvents();
   }, []);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const eventsList = await getEvents();
+      const updatedEvents = await Promise.all(
+        eventsList.map(async (event) => {
+          try {
+            const participantEmails = await getEventParticipants(event.id);
+            return { ...event, participantEmails };
+          } catch (participantError) {
+            console.error("Error fetching participants:", participantError);
+            return { ...event, participantEmails: [] };
+          }
+        })
+      );
+      setEvents(updatedEvents);
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      setError("Failed to load events. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleJoinEvent = async (event) => {
     const user = auth.currentUser;
@@ -116,13 +128,55 @@ const EventsPage = () => {
     }
   };
 
-  const handleUpdateEvent = async (eventId, updatedEventData) => {
+  const startEditingEvent = (event) => {
+    setEditingEvent(event.id);
+    setUpdateFormData({
+      title: event.title || "",
+      description: event.description || "",
+      date: event.date || "",
+      startTime: event.startTime || "",
+      endTime: event.endTime || "",
+      location: event.location || null,
+      category: event.category || "General"
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingEvent(null);
+    setUpdateFormData({
+      title: "",
+      description: "",
+      date: "",
+      startTime: "",
+      endTime: "",
+      location: null,
+      category: ""
+    });
+  };
+
+  const handleUpdateFormChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleLocationSelect = (location) => {
+    setUpdateFormData(prev => ({
+      ...prev,
+      location
+    }));
+  };
+
+  const handleUpdateEvent = async (eventId) => {
     try {
-      await updateEvent(eventId, updatedEventData);
+      await updateEvent(eventId, updateFormData);
       alert("Event updated successfully!");
+      // Reset editing state
+      setEditingEvent(null);
       // Refresh events list
-      const updatedEvents = await getEvents();
-      setEvents(updatedEvents);
+      fetchEvents();
     } catch (error) {
       console.error("Error updating event:", error);
       alert("Failed to update event. Please try again.");
@@ -130,27 +184,31 @@ const EventsPage = () => {
   };
 
   const handleDeleteEvent = async (eventId) => {
-    try {
-      await cancelEvent(eventId);
-      alert("Event canceled successfully!");
-      // Refresh events list
-      const updatedEvents = await getEvents();
-      setEvents(updatedEvents);
-    } catch (error) {
-      console.error("Error canceling event:", error);
-      alert("Failed to cancel event. Please try again.");
+    if (window.confirm("Are you sure you want to cancel this event? This action cannot be undone.")) {
+      try {
+        await cancelEvent(eventId);
+        alert("Event canceled successfully!");
+        // Refresh events list
+        fetchEvents();
+      } catch (error) {
+        console.error("Error canceling event:", error);
+        alert("Failed to cancel event. Please try again.");
+      }
     }
   };
 
   const filteredEvents = events.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
-    const matchesSearch = search ? event.title?.toLowerCase().includes(search.toLowerCase()) : true;
+    const matchesSearch = search ? 
+      event.title?.toLowerCase().includes(search.toLowerCase()) || 
+      event.description?.toLowerCase().includes(search.toLowerCase()) : 
+      true;
     return matchesCategory && matchesSearch;
   });
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Events</h1>
+      <h1 className={styles.title}>Discover Events</h1>
       <div className={styles.filters}>
         <input
           type="text"
@@ -179,53 +237,173 @@ const EventsPage = () => {
       ) : (
         <div className={styles.eventsContainer}>
           {filteredEvents.length === 0 ? (
-            <p className={styles.noEvents}>No events available.</p>
+            <p className={styles.noEvents}>No events found. Try adjusting your filters or create a new event!</p>
           ) : (
             filteredEvents.map((event) => (
               <div key={event.id} className={styles.eventCard}>
-                <h2 className={styles.eventTitle}>{event.title}</h2>
-                <p className={styles.eventDetails}>{event.description}</p>
-                <p className={styles.eventDetails}>
-                  Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}
-                </p>
-                <p className={styles.eventDetails}>Location: {event.location}</p>
-                <p className={styles.category}>Category: {event.category || "Uncategorized"}</p>
-                <p className={styles.organizer}>Organizer: {event.organizer || "Unknown"}</p>
-                <p className={styles.status}>Status: {event.status || "Upcoming"}</p>
-                {auth.currentUser && auth.currentUser.uid !== event.userId && event.status === "Upcoming" && (
-                  <div className={styles.buttonContainer}>
-                    {event.participants?.includes(auth.currentUser?.uid) ? (
-                      <button
-                        onClick={() => handleLeaveEvent(event)}
-                        className={styles.leaveButton}
+                {editingEvent === event.id ? (
+                  <div className={styles.editForm}>
+                    <h3 className={styles.editTitle}>Edit Event</h3>
+                    <div className={styles.formGroup}>
+                      <label>Title</label>
+                      <input
+                        type="text"
+                        name="title"
+                        value={updateFormData.title}
+                        onChange={handleUpdateFormChange}
+                        className={styles.input}
+                        required
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Description</label>
+                      <textarea
+                        name="description"
+                        value={updateFormData.description}
+                        onChange={handleUpdateFormChange}
+                        className={styles.textarea}
+                        rows="3"
+                        required
+                      />
+                    </div>
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}>
+                        <label>Date</label>
+                        <input
+                          type="date"
+                          name="date"
+                          value={updateFormData.date}
+                          onChange={handleUpdateFormChange}
+                          className={styles.input}
+                          required
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label>Start Time</label>
+                        <input
+                          type="time"
+                          name="startTime"
+                          value={updateFormData.startTime}
+                          onChange={handleUpdateFormChange}
+                          className={styles.input}
+                          required
+                        />
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label>End Time</label>
+                        <input
+                          type="time"
+                          name="endTime"
+                          value={updateFormData.endTime}
+                          onChange={handleUpdateFormChange}
+                          className={styles.input}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Location</label>
+                      <LocationPicker 
+                        onLocationSelect={handleLocationSelect} 
+                        initialLocation={updateFormData.location}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Category</label>
+                      <select
+                        name="category"
+                        value={updateFormData.category}
+                        onChange={handleUpdateFormChange}
+                        className={styles.select}
                       >
-                        Leave Event
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleJoinEvent(event)}
-                        className={styles.joinButton}
+                        {categories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className={styles.buttonContainer}>
+                      <button 
+                        className={styles.updateButton}
+                        onClick={() => handleUpdateEvent(event.id)}
                       >
-                        Join Event
+                        Save Changes
                       </button>
+                      <button 
+                        className={styles.cancelButton}
+                        onClick={cancelEditing}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.categoryBadge}>{event.category || "General"}</div>
+                    <h2 className={styles.eventTitle}>{event.title}</h2>
+                    <p className={styles.eventDescription}>{event.description}</p>
+                    <div className={styles.eventDetails}>
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailIcon}>📅</span>
+                        <span>{new Date(event.date).toLocaleDateString()}</span>
+                      </div>
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailIcon}>⏰</span>
+                        <span>{event.startTime} - {event.endTime}</span>
+                      </div>
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailIcon}>📍</span>
+                        <span>{event.location?.address || event.location || "Location not specified"}</span>
+                      </div>
+                    </div>
+                    <div className={styles.organizerInfo}>
+                      <p>Organized by: {event.organizer || "Unknown"}</p>
+                      <p className={styles.statusBadge} data-status={event.status || "Upcoming"}>
+                        {event.status || "Upcoming"}
+                      </p>
+                    </div>
+                    <div className={styles.participantInfo}>
+                      <p>Participants: {event.participants?.length || 0}</p>
+                    </div>
+                    
+                    {auth.currentUser && auth.currentUser.uid !== event.userId && event.status === "Upcoming" && (
+                      <div className={styles.buttonContainer}>
+                        {event.participants?.includes(auth.currentUser?.uid) ? (
+                          <button
+                            onClick={() => handleLeaveEvent(event)}
+                            className={styles.leaveButton}
+                          >
+                            Leave Event
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleJoinEvent(event)}
+                            className={styles.joinButton}
+                          >
+                            Join Event
+                          </button>
+                        )}
+                      </div>
                     )}
-                  </div>
-                )}
-                {auth.currentUser && auth.currentUser.uid === event.userId && (
-                  <div className={styles.buttonContainer}>
-                    <button
-                      onClick={() => handleUpdateEvent(event.id, { title: "Updated Title" })}
-                      className={styles.updateButton}
-                    >
-                      Update Event
-                    </button>
-                    <button
-                      onClick={() => handleDeleteEvent(event.id)}
-                      className={styles.deleteButton}
-                    >
-                      Cancel Event
-                    </button>
-                  </div>
+                    
+                    {auth.currentUser && auth.currentUser.uid === event.userId && (
+                      <div className={styles.buttonContainer}>
+                        <button
+                          onClick={() => startEditingEvent(event)}
+                          className={styles.editButton}
+                        >
+                          Edit Event
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEvent(event.id)}
+                          className={styles.deleteButton}
+                        >
+                          Cancel Event
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ))
