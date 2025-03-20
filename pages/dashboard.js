@@ -10,6 +10,7 @@ import NotificationIcon from "../components/NotificationIcon";
 import NotificationDropdown from "../components/NotificationDropdown";
 import NotificationMobileOverlay from "../components/NotificationMobileOverlay";
 import { notifyOrganizer } from "../firebase/notificationAPI";
+import DonationModal from "../components/DonationModal"; // Import the DonationModal component
 
 const categories = [
   "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
@@ -67,6 +68,7 @@ function Dashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileOverlay, setShowMobileOverlay] = useState(false);
+  const [showDonationModal, setShowDonationModal] = useState(false); // State for donation modal
   const router = useRouter();
 
   // Use the custom hook to manage events
@@ -186,6 +188,18 @@ function Dashboard() {
     }
   };
 
+  // Toggle donation modal
+  const toggleDonationModal = () => {
+    setShowDonationModal(!showDonationModal);
+  };
+
+  // Handle donation submission
+  const handleDonationSubmit = async (donationData) => {
+    // This will be implemented in the DonationModal component
+    console.log("Donation submitted:", donationData);
+    setShowDonationModal(false);
+  };
+
   // Filter events based on search and category
   const filteredUpcomingEvents = upcomingEvents.filter((event) => {
     const matchesCategory = selectedCategory ? event.category === selectedCategory : true;
@@ -270,6 +284,14 @@ function Dashboard() {
               <a className={styles.menuButton}>View All Events</a>
             </Link>
 
+            {/* Donation Button */}
+            <button 
+              onClick={toggleDonationModal} 
+              className={`${styles.menuButton} ${styles.donateButton}`}
+            >
+              Donate
+            </button>
+
             <span className={styles.username}>{user?.displayName || user?.email}</span>
 
             {/* Notification Icon */}
@@ -339,6 +361,14 @@ function Dashboard() {
             <Link href="/events" legacyBehavior>
               <a className={styles.menuButton}>View All Events</a>
             </Link>
+
+            {/* Mobile Donation Button */}
+            <button 
+              onClick={toggleDonationModal} 
+              className={`${styles.menuButton} ${styles.donateButton}`}
+            >
+              Donate
+            </button>
 
             <span className={styles.username}>{user?.displayName || user?.email}</span>
 
@@ -455,6 +485,15 @@ function Dashboard() {
             onMarkAsRead={handleMarkAsRead}
             onClearAll={handleClearAll}
             onClose={() => setShowMobileOverlay(false)}
+          />
+        )}
+
+        {/* Donation Modal */}
+        {showDonationModal && (
+          <DonationModal
+            onClose={toggleDonationModal}
+            onSubmit={handleDonationSubmit}
+            user={user}
           />
         )}
 

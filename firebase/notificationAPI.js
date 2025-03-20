@@ -53,6 +53,19 @@ export const notifyOrganizer = async (organizerId, eventId, participantName, act
   }
 };
 
+// Save a donation notification
+export const saveDonationNotification = async (userId, message, eventId = null) => {
+  try {
+    await sendNotification(userId, {
+      type: "donation",
+      message,
+      eventId
+    });
+  } catch (error) {
+    console.error("Failed to save donation notification:", error);
+  }
+};
+
 // Mark a notification as read
 export const markNotificationAsRead = async (userId, notificationId) => {
   try {

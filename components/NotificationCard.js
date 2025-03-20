@@ -11,15 +11,17 @@ const NotificationCard = ({ notification, icon }) => {
   const getIconForType = (type) => {
     switch (type) {
       case 'event_updated':
-        return '🔄'; // Icon for event updates
+        return '🔄';
       case 'event_canceled':
-        return '❌'; // Icon for event cancellations
+        return '❌';
       case 'joined':
-        return '🎉'; // Icon for joining events
+        return '🎉';
       case 'left':
-        return '👋'; // Icon for leaving events
+        return '👋';
+      case 'donation_received':
+        return '💰';
       default:
-        return '🔔'; // Default icon
+        return '🔔';
     }
   };
 
@@ -48,8 +50,9 @@ const NotificationCard = ({ notification, icon }) => {
       await markAsRead(notification.id);
     }
 
-    // Navigate to related content if applicable
-    if (notification.eventId) {
+    if (notification.type === 'donation_received') {
+      router.push('/donations');
+    } else if (notification.eventId) {
       router.push(`/events/${notification.eventId}`);
     }
   };

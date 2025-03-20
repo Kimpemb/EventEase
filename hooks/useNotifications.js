@@ -1,12 +1,11 @@
-// hooks/useNotifications.js
 import { useState, useEffect } from "react";
 import { auth } from "../firebase/firebaseConfig";
-import { 
-  subscribeToNotifications, 
-  markNotificationAsRead, 
+import {
+  subscribeToNotifications,
+  markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
-  clearAllNotifications
+  clearAllNotifications,
 } from "../firebase/notificationAPI";
 
 /**
@@ -18,117 +17,103 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) {
       setLoading(false);
       return () => {};
     }
-    
+
     setLoading(true);
-    
+
     // Subscribe to notifications
     const unsubscribe = subscribeToNotifications(user.uid, (notificationData) => {
+      console.log("New notifications fetched:", notificationData); // Debugging log
       setNotifications(notificationData);
-      setUnreadCount(notificationData.filter(n => !n.read).length);
+      setUnreadCount(notificationData.filter((n) => !n.read).length);
       setLoading(false);
     });
-    
+
     return () => unsubscribe();
   }, []);
-  
-  /**
-   * Mark a single notification as read
-   * @param {string} notificationId - The notification ID
-   */
+
   const markAsRead = async (notificationId) => {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("User not authenticated");
-      
+
+      console.log(`Marking notification ${notificationId} as read`);
       await markNotificationAsRead(user.uid, notificationId);
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === notificationId 
-            ? { ...notification, read: true } 
+
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === notificationId
+            ? { ...notification, read: true }
             : notification
         )
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
+      console.error("Error marking notification as read:", err);
       setError("Failed to mark notification as read");
-      console.error(err);
     }
   };
-  
-  /**
-   * Mark all notifications as read
-   */
+
   const markAllAsRead = async () => {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("User not authenticated");
-      
+
+      console.log("Marking all notifications as read");
       await markAllNotificationsAsRead(user.uid);
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, read: true }))
+
+      setNotifications((prev) =>
+        prev.map((notification) => ({ ...notification, read: true }))
       );
       setUnreadCount(0);
     } catch (err) {
+      console.error("Error marking all notifications as read:", err);
       setError("Failed to mark all notifications as read");
-      console.error(err);
     }
   };
-  
-  /**
-   * Delete a notification
-   * @param {string} notificationId - The notification ID
-   */
+
   const removeNotification = async (notificationId) => {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("User not authenticated");
-      
+
+      console.log(`Deleting notification ${notificationId}`);
       await deleteNotification(user.uid, notificationId);
-      
-      // Update local state
-      const removedNotification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      
-      // Update unread count if needed
+
+      const removedNotification = notifications.find((n) => n.id === notificationId);
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+
       if (removedNotification && !removedNotification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
     } catch (err) {
+      console.error("Error deleting notification:", err);
       setError("Failed to delete notification");
-      console.error(err);
     }
   };
-  
-  /**
-   * Clear all notifications
-   */
+
   const clearAll = async () => {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error("User not authenticated");
-      
+
+      console.log("Clearing all notifications");
       await clearAllNotifications(user.uid);
-      
-      // Update local state
+
       setNotifications([]);
       setUnreadCount(0);
     } catch (err) {
+      console.error("Error clearing notifications:", err);
       setError("Failed to clear notifications");
-      console.error(err);
     }
   };
-  
+
   return {
     notifications,
     unreadCount,
@@ -137,6 +122,6 @@ export const useNotifications = () => {
     markAsRead,
     markAllAsRead,
     removeNotification,
-    clearAll
+    clearAll,
   };
 };

@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "./firebaseConfig";
 
+
 // Helper function to check if a user is authenticated
 const checkAuth = () => {
   const user = auth.currentUser;
