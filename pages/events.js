@@ -3,7 +3,7 @@ import { getEvents, joinEvent, leaveEvent, getEventParticipants, updateEvent, ca
 import { auth } from "../firebase/firebaseConfig";
 import { notifyOrganizer } from "../firebase/notificationAPI";
 import styles from "../styles/Events.module.css";
-import LocationPicker from "./LocationPicker";
+import LocationPicker from "../components/LocationPicker"; // Updated import path
 
 const categories = [
   "General", "Music", "Sports", "Tech", "Education", "Health", "Business", "Art", "Entertainment"
@@ -354,7 +354,7 @@ const EventsPage = () => {
                       </div>
                       <div className={styles.detailItem}>
                         <span className={styles.detailIcon}>📍</span>
-                        <span>{event.location?.address || event.location || "Location not specified"}</span>
+                        <span>{event.location?.address || "Location not specified"}</span> {/* Fixed */}
                       </div>
                     </div>
                     <div className={styles.organizerInfo}>

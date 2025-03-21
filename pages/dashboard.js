@@ -11,7 +11,6 @@ import NotificationDropdown from "../components/NotificationDropdown";
 import NotificationMobileOverlay from "../components/NotificationMobileOverlay";
 import { notifyOrganizer } from "../firebase/notificationAPI";
 
-// EventCard Component
 const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
   const user = auth.currentUser;
   const isOrganizer = user?.uid === event.userId;
@@ -21,21 +20,25 @@ const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
     <div className={styles.eventCard}>
       <h3>{event.title}</h3>
       <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
-      {/* Display location address correctly */}
       <p>Location: {event.location?.address || "Location not specified"}</p>
       <p>Category: {event.category || "Uncategorized"}</p>
       <p>Organizer: {event.username || "Unknown"}</p>
       <p>Status: {event.status || "Upcoming"}</p>
       <p>Participants: {event.participants?.length || 0}</p>
-      
+
+      {/* Add this section to display the description */}
+      <div className={styles.eventDescription}>
+        <p><strong>Description:</strong> {event.description || "No description available."}</p>
+      </div>
+
       {!isOrganizer && event.status === "Upcoming" && (
         <div className={styles.buttonContainer}>
           {isParticipant ? (
-            <button onClick={() => onLeave(event)} className={styles.leaveButton}>
+            <button onClick={() => onLeave(event.id)} className={styles.leaveButton}>
               Leave Event
             </button>
           ) : (
-            <button onClick={() => onJoin(event)} className={styles.joinButton}>
+            <button onClick={() => onJoin(event.id)} className={styles.joinButton}>
               Join Event
             </button>
           )}
@@ -346,144 +349,144 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboardContainer}>
-      <div className={styles.dashboardPanel}>
-        <header className={styles.dashboardHeader}>
-          <h1 className={styles.dashboardTitle}>EventEase</h1>
+  <div className={styles.dashboardPanel}>
+    <header className={styles.dashboardHeader}>
+      <h1 className={styles.dashboardTitle}>EventEase</h1>
 
-          {/* Desktop Navigation */}
-          <div className={styles.desktopNav}>
-            <input
-              type="text"
-              placeholder="🔍 Search events..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={styles.searchBar}
-              aria-label="Search events"
-            />
+      {/* Desktop Navigation */}
+      <div className={styles.desktopNav}>
+        <input
+          type="text"
+          placeholder="🔍 Search events..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={styles.searchBar}
+          aria-label="Search events"
+        />
 
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className={styles.filterButton}
-              aria-label="Filter by category"
-            >
-              <option value="">All Categories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className={styles.filterButton}
+          aria-label="Filter by category"
+        >
+          <option value="">All Categories</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
 
-            <Link href="/create-event" legacyBehavior>
-              <a className={styles.menuButton}>Create Event</a>
-            </Link>
+        <Link href="/create-event" legacyBehavior>
+          <button className={styles.menuButton}>Create Event</button>
+        </Link>
 
-            <Link href="/events" legacyBehavior>
-              <a className={styles.menuButton}>View All Events</a>
-            </Link>
+        <Link href="/events" legacyBehavior>
+          <button className={styles.menuButton}>View All Events</button>
+        </Link>
 
-            {/* Donation Button */}
-            <button 
-              onClick={handleDonate} 
-              className={`${styles.menuButton} ${styles.donateButton}`}
-            >
-              Donate
-            </button>
+        {/* Donation Button */}
+        <button 
+          onClick={handleDonate} 
+          className={`${styles.menuButton} ${styles.donateButton}`}
+        >
+          Donate
+        </button>
 
-            <span className={styles.username}>{user?.displayName || user?.email}</span>
+        <span className={styles.username}>{user?.displayName || user?.email}</span>
 
-            {/* Notification Icon */}
-            <NotificationIcon
-              unreadCount={unreadCount}
-              onClick={() => setShowDropdown(!showDropdown)}
-            />
+        {/* Notification Icon */}
+        <NotificationIcon
+          unreadCount={unreadCount}
+          onClick={() => setShowDropdown(!showDropdown)}
+        />
 
-            {/* Notification Dropdown */}
-            {showDropdown && (
-              <NotificationDropdown
-                notifications={notifications}
-                onMarkAsRead={handleMarkAsRead}
-                onClearAll={handleClearAll}
-                onClose={() => setShowDropdown(false)}
-              />
-            )}
+        {/* Notification Dropdown */}
+        {showDropdown && (
+          <NotificationDropdown
+            notifications={notifications}
+            onMarkAsRead={handleMarkAsRead}
+            onClearAll={handleClearAll}
+            onClose={() => setShowDropdown(false)}
+          />
+        )}
 
-            <button onClick={handleSignOut} className={styles.menuButton}>
-              Logout
-            </button>
-          </div>
+        <button onClick={handleSignOut} className={styles.menuButton}>
+          Logout
+        </button>
+      </div>
 
-          {/* Hamburger Icon - Mobile Only */}
-          <button
-            className={styles.hamburger}
-            onClick={toggleMenu}
-            aria-label="Toggle Menu"
-          >
-            <span className={styles.hamburgerLine}></span>
-            <span className={styles.hamburgerLine}></span>
-            <span className={styles.hamburgerLine}></span>
-          </button>
+      {/* Hamburger Icon - Mobile Only */}
+      <button
+        className={styles.hamburger}
+        onClick={toggleMenu}
+        aria-label="Toggle Menu"
+      >
+        <span className={styles.hamburgerLine}></span>
+        <span className={styles.hamburgerLine}></span>
+        <span className={styles.hamburgerLine}></span>
+      </button>
 
-          {/* Mobile Navigation Menu */}
-          <div
-            className={`${styles.mobileNav} ${isMenuOpen ? styles.menuOpen : ""}`}
-            aria-hidden={!isMenuOpen}
-          >
-            <input
-              type="text"
-              placeholder="🔍 Search events..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={styles.searchBar}
-              aria-label="Search events"
-            />
+      {/* Mobile Navigation Menu */}
+      <div
+        className={`${styles.mobileNav} ${isMenuOpen ? styles.menuOpen : ""}`}
+        aria-hidden={!isMenuOpen}
+      >
+        <input
+          type="text"
+          placeholder="🔍 Search events..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={styles.searchBar}
+          aria-label="Search events"
+        />
 
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className={styles.filterButton}
-              aria-label="Filter by category"
-            >
-              <option value="">All Categories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className={styles.filterButton}
+          aria-label="Filter by category"
+        >
+          <option value="">All Categories</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
 
-            <Link href="/create-event" legacyBehavior>
-              <a className={styles.menuButton}>Create Event</a>
-            </Link>
+        <Link href="/create-event" legacyBehavior>
+          <button className={styles.menuButton}>Create Event</button>
+        </Link>
 
-            <Link href="/events" legacyBehavior>
-              <a className={styles.menuButton}>View All Events</a>
-            </Link>
+        <Link href="/events" legacyBehavior>
+          <button className={styles.menuButton}>View All Events</button>
+        </Link>
 
-            {/* Mobile Donation Button */}
-            <button 
-              onClick={handleDonate}
-              className={`${styles.menuButton} ${styles.donateButton}`}
-            >
-              Donate
-            </button>
+        {/* Mobile Donation Button */}
+        <button 
+          onClick={handleDonate}
+          className={`${styles.menuButton} ${styles.donateButton}`}
+        >
+          Donate
+        </button>
 
-            <span className={styles.username}>{user?.displayName || user?.email}</span>
+        <span className={styles.username}>{user?.displayName || user?.email}</span>
 
-            {/* Notification Icon for Mobile */}
-            <button
-              className={styles.menuButton}
-              onClick={() => setShowMobileOverlay(true)}
-            >
-              Notifications ({unreadCount})
-            </button>
+        <button
+          className={styles.menuButton}
+          onClick={() => setShowMobileOverlay(true)}
+        >
+          Notifications ({unreadCount})
+        </button>
 
-            <button onClick={handleSignOut} className={styles.menuButton}>
-              Logout
-            </button>
-          </div>
-        </header>
+        <button onClick={handleSignOut} className={styles.menuButton}>
+          Logout
+        </button>
+      </div>
+    </header>
+
 
         {/* Welcome Section */}
         <section className={styles.welcomeSection}>
@@ -518,11 +521,13 @@ const Dashboard = () => {
               ))}
             </div>
           )}
-          {filteredUpcomingEvents.length > 3 && (
-            <Link href="/events" legacyBehavior>
-              <a className={styles.viewMore}>View More...</a>
-            </Link>
-          )}
+       {filteredUpcomingEvents.length > 3 && (
+  <div style={{ display: "flex", justifyContent: "center", marginTop: "20px" }}>
+    <Link href="/upcoming-events" legacyBehavior>
+      <a className={styles.menuButton}>View Upcoming Events</a>
+    </Link>
+  </div>
+)}
         </section>
 
         {/* Joined Events */}

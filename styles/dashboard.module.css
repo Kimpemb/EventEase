@@ -72,7 +72,7 @@
 
 /* Hamburger Icon - Hidden on Desktop */
 .hamburger {
-  display: none; /* Hidden by default */
+  display: none;
 }
 
 /* Hamburger Icon - Visible on Mobile */
@@ -87,47 +87,27 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    z-index: 1000; /* Ensure it's above other elements */
+    z-index: 1000;
   }
 
   .hamburgerLine {
     width: 100%;
     height: 3px;
-    background: #1a1a1a; /* Dark gray for visibility */
+    background: #1a1a1a;
     border-radius: 2px;
-    transition: transform 0.3s ease, opacity 0.3s ease; /* Smooth transitions */
+    transition: transform 0.3s ease, opacity 0.3s ease;
   }
 
-  /* Hide Desktop Navigation on Mobile */
   .desktopNav {
     display: none;
   }
 
-  /* Show Mobile Navigation on Mobile */
   .mobileNav {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    position: fixed;
-    top: 70px;
-    right: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
-    padding: 15px;
-    width: 250px;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
-    opacity: 0;
-    visibility: hidden;
-    z-index: 1000;
   }
 
-  /* Mobile Menu Open State */
   .mobileNav.menuOpen {
-    max-height: 500px; /* Adjust based on content */
+    max-height: 500px;
     opacity: 1;
     visibility: visible;
   }
@@ -136,67 +116,85 @@
 /* Menu Buttons */
 .menuButton {
   background-color: transparent;
-  color: #1a1a1a; /* Dark gray for readability */
+  color: #1a1a1a;
   border: none;
-  padding: 8px 0;
+  padding: 0.6rem 1rem;
+  margin-right: 1rem;
   cursor: pointer;
   font-size: 16px;
   position: relative;
-  transition: color 0.3s ease; /* Smooth color transition */
+  transition: color 0.3s ease, background-color 0.3s ease;
+  white-space: nowrap; /* Force text to stay on one line */
 }
 
 .menuButton:hover {
-  color: #333333; /* Slightly darker on hover */
+  background-color: #f0f0f0;
 }
 
 .menuButton:hover::after {
-  content: '';
+  content: "";
   position: absolute;
-  bottom: 0;
   left: 0;
+  bottom: -3px;
   width: 100%;
-  height: 2px;
-  background-color: #1a1a1a; /* Underline effect */
-  transition: width 0.3s ease; /* Smooth underline transition */
+  height: 3px;
+  background-color: #ccc;
+  transition: all 0.3s;
 }
 
 /* Search Bar */
 .searchBar {
   padding: 8px 12px;
-  border: 1px solid #ddd; /* Light gray border */
+  border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 14px;
   width: 200px;
   background-color: transparent;
-  transition: border-color 0.3s ease; /* Smooth border transition */
+  transition: border-color 0.3s ease;
 }
 
 .searchBar:hover {
-  border-color: #1a1a1a; /* Darker border on hover */
+  border-color: #1a1a1a;
 }
 
 /* Filter Button */
 .filterButton {
   padding: 8px 12px;
-  border: 1px solid #ddd; /* Light gray border */
+  border: 1px solid #ddd;
   border-radius: 5px;
   background-color: transparent;
   cursor: pointer;
   width: 160px;
   font-size: 14px;
-  color: #1a1a1a; /* Dark gray for readability */
-  transition: border-color 0.3s ease; /* Smooth border transition */
+  color: #1a1a1a;
+  transition: border-color 0.3s ease;
 }
 
 .filterButton:hover {
-  border-color: #1a1a1a; /* Darker border on hover */
+  border-color: #1a1a1a;
 }
 
 /* Username */
 .username {
   font-weight: bold;
-  color: #1a1a1a; /* Dark gray for readability */
+  color: #1a1a1a;
 }
+
+/* Donate Button */
+.donateButton {
+  background-color: #003366;
+  color: white;
+  padding: 0.6rem 1rem;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s;
+  white-space: nowrap; /* Keep text on one line */
+}
+
+.donateButton:hover {
+  background-color: #002244;
+  color: #f0f0f0; /* Ensure text is visible */
+}
+
 
 /* Welcome Section */
 .welcomeSection {
