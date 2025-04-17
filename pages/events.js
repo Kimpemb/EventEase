@@ -11,12 +11,8 @@ import {
 import { auth } from "../firebase/firebaseConfig";
 import { notifyOrganizer } from "../firebase/notificationAPI";
 import styles from "../styles/Events.module.css";
-<<<<<<< HEAD
-import LocationPicker from "../components/LocationPicker"; // Updated import path
-=======
 
 const LocationPicker = dynamic(() => import("../components/LocationPicker"), { ssr: false });
->>>>>>> edcdbc368391c996aad31ac824b7fd7a38d9f45c
 
 const categories = [
   "General",
