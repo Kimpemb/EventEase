@@ -7,7 +7,27 @@ import {
   sendEmailVerification,
   signOut,
 } from "firebase/auth";
-import { sendNotification } from "./NotificationService"; // Import notification service
+import { sendNotification } from "./NotificationService";
+
+// Helper to get readable error messages
+const getFriendlyError = (code) => {
+  switch (code) {
+    case "auth/invalid-email":
+      return "Invalid email address format.";
+    case "auth/user-disabled":
+      return "This account has been disabled.";
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "Invalid email or password.";
+    case "auth/email-already-in-use":
+      return "An account with this email already exists.";
+    case "auth/weak-password":
+      return "Password is too weak. It should be at least 6 characters.";
+    default:
+      return "An error occurred. Please try again.";
+  }
+};
 
 // Sign Up Function with Email Verification and Notification
 export const signUp = async (email, password, username) => {
@@ -15,23 +35,19 @@ export const signUp = async (email, password, username) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Update the user's profile with the username
     await updateProfile(user, { displayName: username });
-
-    // Send email verification
     await sendEmailVerification(user);
 
-    // Send welcome notification
     await sendNotification({
       userId: user.uid,
       type: "welcome",
       message: `Welcome to EventEase, ${username}! Verify your email to get started.`,
-      channel: "email", // Default channel
+      channel: "email",
     });
 
     return user;
   } catch (error) {
-    throw error;
+    throw new Error(getFriendlyError(error.code));
   }
 };
 
@@ -42,9 +58,7 @@ export const login = async (email, password) => {
     const user = userCredential.user;
 
     if (!user.emailVerified) {
-      await signOut(auth); // Sign out unverified users
-
-      // Send reminder notification to verify email
+      await signOut(auth);
       await sendNotification({
         userId: user.uid,
         type: "email_verification_reminder",
@@ -55,28 +69,28 @@ export const login = async (email, password) => {
       throw new Error("Email not verified. Please check your inbox.");
     }
 
-    // Send login success notification
     await sendNotification({
       userId: user.uid,
       type: "login_success",
-      message: `Welcome back, ${user.displayName}!`,
-      channel: "in-app", // Default to in-app notification
+      message: `Welcome back, ${user.displayName || user.email}!`,
+      channel: "in-app",
     });
 
     return user;
   } catch (error) {
-    throw error;
+    throw new Error(getFriendlyError(error.code));
   }
 };
 
 // Resend Verification Email with Notification
 export const resendVerificationEmail = async () => {
-  if (auth.currentUser) {
-    await sendEmailVerification(auth.currentUser);
+  const currentUser = auth.currentUser;
 
-    // Send notification about email verification sent
+  if (currentUser) {
+    await sendEmailVerification(currentUser);
+
     await sendNotification({
-      userId: auth.currentUser.uid,
+      userId: currentUser.uid,
       type: "email_verification_sent",
       message: "Verification email sent. Please check your inbox.",
       channel: "email",

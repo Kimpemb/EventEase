@@ -1,3 +1,4 @@
+// components/AuthForm.js
 import { useState, useEffect } from "react";
 import { signUp, login } from "../firebase/firebaseAuth";
 import styles from "./AuthForm.module.css";
@@ -8,64 +9,38 @@ const AuthForm = ({ isSignUp = true }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Reset fields when component mounts or form type changes
   useEffect(() => {
+    setUsername("");
     setEmail("");
     setPassword("");
-    setUsername("");
-    setErrorMessage(null);
-    setSuccessMessage(null);
+    setError("");
+    setSuccess("");
   }, [isSignUp]);
 
-  const handleFormSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(null);
-    setSuccessMessage(null);
+    setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
+      let user;
       if (isSignUp) {
-        // Sign up logic
-        const user = await signUp(email, password, username);
-        setSuccessMessage("Sign-up successful!");
-        console.log("User:", user);
+        user = await signUp(email, password, username);
+        setSuccess("Sign-up successful! Check your email for verification.");
       } else {
-        // Login logic
-        const user = await login(email, password);
-        setSuccessMessage("Sign-in successful!");
-        console.log("User:", user);
-
-        // Redirect to dashboard after successful login
-        try {
-          await router.push("/dashboard");
-        } catch (error) {
-          console.error("Redirect error:", error); // Log the error
-          setErrorMessage("Failed to redirect. Please try again.");
-        }
+        user = await login(email, password);
+        setSuccess("Login successful!");
+        await router.push("/dashboard");
       }
-    } catch (error) {
-      // Handle Firebase authentication errors
-      console.error("Error:", error); // Log the error
-      let message = "An error occurred. Please try again.";
-      switch (error.code) {
-        case "auth/user-not-found":
-          message = "User not found. Please sign up.";
-          break;
-        case "auth/wrong-password":
-          message = "Incorrect password. Please try again.";
-          break;
-        case "auth/email-already-in-use":
-          message = "Email already in use. Please sign in.";
-          break;
-        default:
-          message = error.message; // Use the error message
-      }
-      setErrorMessage(message);
+    } catch (err) {
+      const friendly = err.message || "An unexpected error occurred.";
+      setError(friendly);
     } finally {
       setLoading(false);
     }
@@ -75,12 +50,10 @@ const AuthForm = ({ isSignUp = true }) => {
     <div className={styles.container}>
       <h2 className={styles.title}>{isSignUp ? "Sign Up" : "Sign In"}</h2>
 
-      {/* Display error and success messages */}
-      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-      {successMessage && <p className={styles.success}>{successMessage}</p>}
+      {error && <p className={styles.error}>{error}</p>}
+      {success && <p className={styles.success}>{success}</p>}
 
-      {/* Form */}
-      <form onSubmit={handleFormSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit} className={styles.form}>
         {isSignUp && (
           <input
             type="text"
@@ -108,15 +81,22 @@ const AuthForm = ({ isSignUp = true }) => {
           required
         />
         <button type="submit" className={styles.button} disabled={loading}>
-          {loading ? (isSignUp ? "Signing Up..." : "Signing In...") : isSignUp ? "Sign Up" : "Sign In"}
+          {loading
+            ? isSignUp
+              ? "Signing Up..."
+              : "Signing In..."
+            : isSignUp
+            ? "Sign Up"
+            : "Sign In"}
         </button>
       </form>
 
-      {/* Switch between Sign Up and Sign In */}
       <p className={styles.switchText}>
         {isSignUp ? "Already have an account? " : "Don't have an account? "}
         <Link href={isSignUp ? "/signin" : "/signup"}>
-          <span className={styles.switchLink}>{isSignUp ? "Sign In" : "Sign Up"}</span>
+          <span className={styles.switchLink}>
+            {isSignUp ? "Sign In" : "Sign Up"}
+          </span>
         </Link>
       </p>
     </div>
