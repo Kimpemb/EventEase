@@ -114,7 +114,6 @@ export const useEvents = () => {
   }, [categorizeEvents]);
 
   // Handle joining an event
-// hooks/useEvents.js
 const handleJoinEvent = async (eventId) => {
   const user = auth.currentUser;
   if (!user) {

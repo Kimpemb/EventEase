@@ -13,43 +13,64 @@ import { notifyOrganizer } from "../firebase/notificationAPI";
 
 const EventCard = ({ event, onJoin, onLeave, onDelete, onEdit }) => {
   const user = auth.currentUser;
-  const isOrganizer = user?.uid === event.userId;
-  const isParticipant = event.participants?.includes(user?.uid);
+  const safeEvent = event || {}; // Prevent crashes if event is undefined
+
+  // Safely derived states (optional but recommended)
+  const isOrganizer = user?.uid && safeEvent.userId && user.uid === safeEvent.userId;
+  const isParticipant = user?.uid && safeEvent.participants?.includes(user.uid);
+  const isValidEvent = !!safeEvent.id;
 
   return (
     <div className={styles.eventCard}>
-      <h3>{event.title}</h3>
-      <p>Date: {new Date(event.date).toLocaleDateString()} | Time: {event.startTime} - {event.endTime}</p>
-      <p>Location: {event.location?.address || "Location not specified"}</p>
-      <p>Category: {event.category || "Uncategorized"}</p>
-      <p>Organizer: {event.username || "Unknown"}</p>
-      <p>Status: {event.status || "Upcoming"}</p>
-      <p>Participants: {event.participants?.length || 0}</p>
+      {/* All fields with fallbacks */}
+      <h3>{safeEvent.title || "Untitled Event"}</h3>
+      <p>Date: {safeEvent.date ? new Date(safeEvent.date).toLocaleDateString() : "Not scheduled"} | Time: {safeEvent.startTime || "--"} - {safeEvent.endTime || "--"}</p>
+      <p>Location: {safeEvent.location?.address || "Location not specified"}</p>
+      <p>Category: {safeEvent.category || "Uncategorized"}</p>
+      <p>Organizer: {safeEvent.username || "Unknown"}</p>
+      <p>Status: {safeEvent.status || "Upcoming"}</p>
+      <p>Participants: {safeEvent.participants?.length || 0}</p>
 
-      {/* Add this section to display the description */}
       <div className={styles.eventDescription}>
-        <p><strong>Description:</strong> {event.description || "No description available."}</p>
+        <p><strong>Description:</strong> {safeEvent.description || "No description available."}</p>
       </div>
 
-      {!isOrganizer && event.status === "Upcoming" && (
+      {!isOrganizer && safeEvent.status === "Upcoming" && (
         <div className={styles.buttonContainer}>
           {isParticipant ? (
-            <button onClick={() => onLeave(event.id)} className={styles.leaveButton}>
+            <button 
+              onClick={() => isValidEvent && onLeave(safeEvent)} 
+              className={styles.leaveButton}
+              disabled={!isValidEvent}
+            >
               Leave Event
             </button>
           ) : (
-            <button onClick={() => onJoin(event.id)} className={styles.joinButton}>
+            <button 
+              onClick={() => isValidEvent && onJoin(safeEvent)} 
+              className={styles.joinButton}
+              disabled={!isValidEvent}
+            >
               Join Event
             </button>
           )}
         </div>
       )}
-      {isOrganizer && event.status !== "Ended" && (
+
+      {isOrganizer && safeEvent.status !== "Ended" && (
         <div className={styles.buttonContainer}>
-          <button onClick={() => onEdit(event.id)} className={styles.menuButton}>
+          <button 
+            onClick={() => safeEvent.id && onEdit(safeEvent.id)} 
+            className={styles.menuButton}
+            disabled={!safeEvent.id}
+          >
             Edit
           </button>
-          <button onClick={() => onDelete(event.id)} className={styles.leaveButton}>
+          <button 
+            onClick={() => safeEvent.id && onDelete(safeEvent.id)} 
+            className={styles.leaveButton}
+            disabled={!safeEvent.id}
+          >
             Delete
           </button>
         </div>
