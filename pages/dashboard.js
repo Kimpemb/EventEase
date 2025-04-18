@@ -613,25 +613,6 @@ const Dashboard = () => {
           />
         )}
 
-        {/* Profile & Settings */}
-        <section className={styles.profileSettings}>
-          <h2>👤 Profile & Settings</h2>
-          <div className={styles.profileActions}>
-            <button className={styles.menuButton}>Edit Profile</button>
-            <button className={styles.menuButton}>Change Password</button>
-            <button className={styles.menuButton}>Privacy Settings</button>
-            <button className={styles.menuButton}>Dark Mode</button>
-          </div>
-        </section>
-
-        {/* Insights */}
-        <section className={styles.insights}>
-          <h2>📊 Insights</h2>
-          <div className={styles.insightsContent}>
-            <p>🎉 Most Popular Event: &quot;Music Fest&quot; (500 participants)</p>
-            <p>🤔 Events You Might Like: &quot;Art Expo&quot; | &quot;Tech Conference&quot;</p>
-          </div>
-        </section>
 
         {/* Footer */}
         <footer className={styles.dashboardFooter}>
