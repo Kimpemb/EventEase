@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import styles from "../styles/locationpicker.module.css";
 
 // Fix for default marker icon in Next.js
 const DefaultIcon = L.icon({
@@ -19,7 +20,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 function MapClickHandler({ onMapClick }) {
   const map = useMap();
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (!map) return;
     
     map.on('click', onMapClick);
@@ -33,14 +34,14 @@ function MapClickHandler({ onMapClick }) {
 }
 
 // Map Center Updater Component
-function MapCenterUpdater({ center }) {
+function MapCenterUpdater({ center, zoom }) {
   const map = useMap();
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (map) {
-      map.setView(center, map.getZoom());
+      map.setView(center, zoom || map.getZoom());
     }
-  }, [center, map]);
+  }, [center, map, zoom]);
   
   return null;
 }
@@ -57,6 +58,7 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
       ? [initialLocation.lat, initialLocation.lng] 
       : [51.505, -0.09]
   );
+  const [mapZoom, setMapZoom] = useState(13);
   const [address, setAddress] = useState(
     initialLocation ? initialLocation.address : ""
   );
@@ -65,16 +67,86 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLocationTip, setShowLocationTip] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isNetworkError, setIsNetworkError] = useState(false);
   
   const searchTimeoutRef = useRef(null);
   const mapRef = useRef(null);
+  const apiRequestsCount = useRef(0);
+  const lastRequestTime = useRef(0);
+  const tooltipTimeoutRef = useRef(null);
+
+  // Rate limiter for Nominatim API (max 1 request per second)
+  const rateLimit = useCallback((fn) => {
+    return async (...args) => {
+      const now = Date.now();
+      const timeSinceLastRequest = now - lastRequestTime.current;
+      
+      // If less than 1.1 seconds since last request, add delay
+      if (timeSinceLastRequest < 1100) {
+        const delay = 1100 - timeSinceLastRequest;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      
+      lastRequestTime.current = Date.now();
+      apiRequestsCount.current += 1;
+      
+      return fn(...args);
+    };
+  }, []);
+
+  // Check for network connectivity
+  const checkNetworkConnectivity = useCallback(() => {
+    return navigator.onLine;
+  }, []);
+
+  // Enhanced fetch with network error handling
+  const enhancedFetch = useCallback(async (url, options = {}) => {
+    if (!checkNetworkConnectivity()) {
+      setIsNetworkError(true);
+      throw new Error("No internet connection. Please check your network and try again.");
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      setIsNetworkError(false);
+      return response;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        setIsNetworkError(true);
+        throw new Error("Request timed out. Please check your connection and try again.");
+      }
+      
+      // Check if it's a network error
+      if (!checkNetworkConnectivity() || error.message.includes('Failed to fetch')) {
+        setIsNetworkError(true);
+        throw new Error("Network error. Please check your connection and try again.");
+      }
+      
+      throw error;
+    }
+  }, [checkNetworkConnectivity]);
 
   // Geocoding functions that use Nominatim API directly
   const geocodeAddress = useCallback(async (query) => {
     if (!query.trim()) return [];
     
     try {
-      const response = await fetch(
+      const response = await enhancedFetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
         { 
           headers: { 
@@ -84,20 +156,19 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
         }
       );
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (err) {
       console.error("Geocoding error:", err);
       throw err;
     }
-  }, []);
+  }, [enhancedFetch]);
+
+  const geocodeAddressWithRateLimit = useCallback(rateLimit(geocodeAddress), [geocodeAddress, rateLimit]);
 
   const reverseGeocode = useCallback(async (lat, lng) => {
     try {
-      const response = await fetch(
+      const response = await enhancedFetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
         { 
           headers: { 
@@ -107,16 +178,15 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
         }
       );
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (err) {
       console.error("Reverse geocoding error:", err);
       throw err;
     }
-  }, []);
+  }, [enhancedFetch]);
+
+  const reverseGeocodeWithRateLimit = useCallback(rateLimit(reverseGeocode), [reverseGeocode, rateLimit]);
 
   // Handle map click
   const handleMapClick = useCallback((e) => {
@@ -129,17 +199,27 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
   const updateLocationFromCoordinates = useCallback(async (lat, lng) => {
     setIsSearching(true);
     setErrorMessage("");
+    setIsNetworkError(false);
     
     try {
-      const result = await reverseGeocode(lat, lng);
+      // Try to get a more precise address with a higher zoom level
+      const result = await reverseGeocodeWithRateLimit(lat, lng);
       
       if (result && result.display_name) {
+        // Success case - we got an address
         setAddress(result.display_name);
+        
+        // Use the exact coordinates from the geolocation API, not from Nominatim
+        // This ensures the marker is exactly where the user is
         onLocationSelect({
           lat,
           lng,
           address: result.display_name
         });
+        
+        // Reset retry counter on success
+        setRetryCount(0);
+        setShowLocationTip(false);
       } else {
         // Fallback to coordinates if no address found
         const fallbackAddress = `Location at ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
@@ -149,6 +229,9 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
           lng,
           address: fallbackAddress
         });
+        
+        // Show tip if no address found
+        setShowLocationTip(true);
       }
     } catch (err) {
       console.error("Failed to get address:", err);
@@ -159,13 +242,23 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
         lng,
         address: fallbackAddress
       });
-      setErrorMessage("Could not retrieve address for this location.");
+      
+      // Display network-specific error message
+      if (err.message.includes('Network error') || err.message.includes('Failed to fetch') || err.message.includes('internet connection')) {
+        setIsNetworkError(true);
+        setErrorMessage("Network error: Could not retrieve address. Please check your connection and try again.");
+      } else {
+        setErrorMessage("Could not retrieve address for this location.");
+      }
+      
+      // Show tip for potential retry
+      setShowLocationTip(true);
     } finally {
       setIsSearching(false);
     }
-  }, [onLocationSelect, reverseGeocode]);
+  }, [onLocationSelect, reverseGeocodeWithRateLimit]);
 
-  // Handle search with debounce
+  // Handle search with debounce (reduced to 800ms for better responsiveness)
   const handleSearchChange = useCallback((e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -181,24 +274,33 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
       return;
     }
   
-    // Set new timeout for debounced search (2000ms delay)
+    // Set new timeout for debounced search (800ms delay)
     searchTimeoutRef.current = setTimeout(async () => {
       setIsSearching(true);
       setErrorMessage("");
+      setIsNetworkError(false);
   
       try {
-        const results = await geocodeAddress(query);
+        const results = await geocodeAddressWithRateLimit(query);
         setSearchResults(results);
         setShowDropdown(results.length > 0);
+        
+        // Hide location tip when search is used
+        setShowLocationTip(false);
       } catch (err) {
-        setErrorMessage("Search failed. Please try again.");
+        if (err.message.includes('Network error') || err.message.includes('Failed to fetch') || err.message.includes('internet connection')) {
+          setIsNetworkError(true);
+          setErrorMessage("Network error: Search failed. Please check your connection and try again.");
+        } else {
+          setErrorMessage("Search failed. Please try again.");
+        }
         setSearchResults([]);
         setShowDropdown(false);
       } finally {
         setIsSearching(false);
       }
-    }, 2000); // 2000ms = 2 seconds
-  }, [geocodeAddress]);
+    }, 800); // 800ms - more responsive than 2 seconds
+  }, [geocodeAddressWithRateLimit]);
 
   // Handle search result selection
   const handleResultSelect = useCallback((result) => {
@@ -210,12 +312,16 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
     setAddress(result.display_name);
     setSearchQuery(result.display_name);
     setShowDropdown(false);
+    setMapZoom(15); // Zoom in when selecting a specific location
     
     onLocationSelect({
       lat,
       lng,
       address: result.display_name
     });
+    
+    // Hide location tip when a location is selected
+    setShowLocationTip(false);
   }, [onLocationSelect]);
 
   // Handle search form submission
@@ -226,9 +332,10 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
     
     setIsSearching(true);
     setErrorMessage("");
+    setIsNetworkError(false);
     
     try {
-      const results = await geocodeAddress(searchQuery);
+      const results = await geocodeAddressWithRateLimit(searchQuery);
       
       if (results.length > 0) {
         // Automatically select the first result
@@ -239,22 +346,31 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
         setPosition([lat, lng]);
         setMapCenter([lat, lng]);
         setAddress(result.display_name);
+        setMapZoom(15); // Zoom in when selecting a specific location
         
         onLocationSelect({
           lat,
           lng,
           address: result.display_name
         });
+        
+        // Hide location tip when search is used
+        setShowLocationTip(false);
       } else {
         setErrorMessage("No locations found. Please try a different search.");
       }
     } catch (err) {
-      setErrorMessage("Search failed. Please try again.");
+      if (err.message.includes('Network error') || err.message.includes('Failed to fetch') || err.message.includes('internet connection')) {
+        setIsNetworkError(true);
+        setErrorMessage("Network error: Search failed. Please check your connection and try again.");
+      } else {
+        setErrorMessage("Search failed. Please try again.");
+      }
     } finally {
       setIsSearching(false);
       setShowDropdown(false);
     }
-  }, [searchQuery, geocodeAddress, onLocationSelect]);
+  }, [searchQuery, geocodeAddressWithRateLimit, onLocationSelect]);
 
   // Get current location
   const getCurrentLocation = useCallback(() => {
@@ -263,155 +379,196 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
       return;
     }
     
+    // Check network connectivity first
+    if (!checkNetworkConnectivity()) {
+      setIsNetworkError(true);
+      setErrorMessage("No internet connection. Please check your network before using location features.");
+      return;
+    }
+    
     setIsSearching(true);
     setErrorMessage("");
+    setIsNetworkError(false);
+    
+    // Increment retry counter
+    const newRetryCount = retryCount + 1;
+    setRetryCount(newRetryCount);
+    
+    // Clear any cached positions first
+    if (navigator.geolocation.clearWatch) {
+      // This is a workaround to try to clear cached positions in Chrome
+      const watchId = navigator.geolocation.watchPosition(() => {}, () => {});
+      navigator.geolocation.clearWatch(watchId);
+    }
+    
+    // Force Chrome to use high accuracy and avoid caching
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 20000,       // Increased timeout for Chrome
+      maximumAge: 0,        // Don't use cached positions
+      forceRequest: true    // Non-standard option that some browsers might support
+    };
     
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude: lat, longitude: lng } = position.coords;
+        const { latitude: lat, longitude: lng, accuracy } = position.coords;
+        
+        console.log(`Browser: ${navigator.userAgent}`);
+        console.log(`Got position with accuracy: ${accuracy} meters`);
+        console.log(`Coordinates: ${lat}, ${lng}`);
+        console.log(`Timestamp: ${new Date(position.timestamp).toISOString()}`);
+        console.log(`Attempt number: ${newRetryCount}`);
+        
+        // Check if this is a fresh position
+        const positionAge = Date.now() - position.timestamp;
+        console.log(`Position age: ${positionAge} ms`);
         
         setPosition([lat, lng]);
         setMapCenter([lat, lng]);
+        
+        // Adjust zoom based on accuracy
+        const zoomLevel = accuracy <= 100 ? 16 : accuracy <= 500 ? 15 : 14;
+        setMapZoom(zoomLevel);
+        
+        // If accuracy is poor, show the location tip
+        if (accuracy > 500 || positionAge > 60000) {
+          setShowLocationTip(true);
+          
+          // If this tooltip is shown, automatically hide it after 10 seconds
+          if (tooltipTimeoutRef.current) {
+            clearTimeout(tooltipTimeoutRef.current);
+          }
+          tooltipTimeoutRef.current = setTimeout(() => {
+            setShowLocationTip(false);
+          }, 10000);
+        } else {
+          setShowLocationTip(false);
+        }
         
         // Get address for the location
         updateLocationFromCoordinates(lat, lng);
       },
       (err) => {
         console.error("Geolocation error:", err);
-        setErrorMessage("Could not get your current location. Please try again or search for a location.");
+        let errorMsg = "Could not get your current location.";
+        
+        switch(err.code) {
+          case 1:
+            errorMsg = "Location access was denied. Please enable location services and try again.";
+            break;
+          case 2:
+            errorMsg = "Location unavailable. Please try again or search for a location.";
+            break;
+          case 3:
+            errorMsg = "Location request timed out. Please try again or search for a location.";
+            break;
+        }
+        
+        // Add browser-specific suggestions
+        const isChrome = navigator.userAgent.indexOf("Chrome") > -1;
+        if (isChrome) {
+          errorMsg += " For Chrome, please check your location settings at chrome://settings/content/location";
+        }
+        
+        setErrorMessage(errorMsg);
         setIsSearching(false);
-      }
+        setShowLocationTip(true); // Show tip on error
+      },
+      options
     );
-  }, [updateLocationFromCoordinates]);
+  }, [updateLocationFromCoordinates, retryCount, checkNetworkConnectivity]);
 
-  // CSS Styles
-  const styles = {
-    container: {
-      width: "100%",
-    },
-    searchContainer: {
-      position: "relative",
-      marginBottom: "12px",
-    },
-    searchForm: {
-      display: "flex",
-      width: "100%",
-    },
-    input: {
-      flex: 1,
-      padding: "10px",
-      borderRadius: "4px 0 0 4px",
-      border: "1px solid #ccc",
-      borderRight: "none",
-      fontSize: "14px",
-    },
-    searchButton: {
-      padding: "10px 16px",
-      backgroundColor: "#4285f4",
-      color: "white",
-      border: "none",
-      borderRadius: "0 4px 4px 0",
-      cursor: "pointer",
-      fontWeight: "bold",
-    },
-    locationButton: {
-      padding: "10px",
-      backgroundColor: "#f0f0f0",
-      border: "1px solid #ccc",
-      borderRadius: "4px",
-      marginLeft: "8px",
-      cursor: "pointer",
-    },
-    dropdown: {
-      position: "absolute",
-      top: "100%",
-      left: 0,
-      right: 0,
-      backgroundColor: "white",
-      boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-      borderRadius: "4px",
-      zIndex: 1000,
-      maxHeight: "200px",
-      overflowY: "auto",
-    },
-    dropdownItem: {
-      padding: "10px",
-      borderBottom: "1px solid #eee",
-      cursor: "pointer",
-    },
-    mapContainer: {
-      height: "400px",
-      width: "100%",
-      border: "1px solid #ccc",
-      borderRadius: "4px",
-      overflow: "hidden",
-    },
-    loadingIndicator: {
-      padding: "10px",
-      backgroundColor: "#f8f9fa",
-      borderRadius: "4px",
-      marginBottom: "10px",
-      textAlign: "center",
-    },
-    error: {
-      padding: "10px",
-      backgroundColor: "#f8d7da",
-      color: "#721c24",
-      borderRadius: "4px",
-      marginBottom: "10px",
-    },
-    addressDisplay: {
-      marginTop: "12px",
-      padding: "12px",
-      backgroundColor: "#f8f9fa",
-      borderRadius: "4px",
-      fontSize: "14px",
-      border: "1px solid #e9ecef",
-    },
-  };
+  // Handle click outside dropdown to close it
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (showDropdown && !event.target.closest(`.${styles.searchContainer}`)) {
+        setShowDropdown(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDropdown]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Network status listener
+  useEffect(() => {
+    const handleOnline = () => {
+      if (isNetworkError) {
+        setIsNetworkError(false);
+        setErrorMessage(prev => prev.includes("Network error") ? "" : prev);
+      }
+    };
+    
+    const handleOffline = () => {
+      setIsNetworkError(true);
+      setErrorMessage("You are currently offline. Please check your internet connection.");
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [isNetworkError]);
 
   return (
-    <div style={styles.container}>
+    <div className={styles.container}>
       {/* Search Bar */}
-      <div style={styles.searchContainer}>
-        <form onSubmit={handleSearchSubmit} style={styles.searchForm}>
+      <div className={styles.searchContainer}>
+        <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
           <input
             type="text"
             placeholder="Search for a location..."
             value={searchQuery}
             onChange={handleSearchChange}
             disabled={isSearching}
-            style={styles.input}
+            className={styles.input}
             autoComplete="off"
           />
           <button 
             type="submit" 
             disabled={isSearching || !searchQuery.trim()}
-            style={{
-              ...styles.searchButton,
-              backgroundColor: isSearching || !searchQuery.trim() ? "#9fc1f9" : "#4285f4"
-            }}
+            className={`${styles.searchButton} ${(isSearching || !searchQuery.trim()) ? styles.disabled : ''}`}
           >
             {isSearching ? "Searching..." : "Search"}
           </button>
-          <button 
-            type="button" 
-            onClick={getCurrentLocation} 
-            disabled={isSearching}
-            style={styles.locationButton}
-            title="Use your current location"
-          >
-            📍
-          </button>
+          <div className={styles.locationButtonContainer}>
+            <button 
+              type="button" 
+              onClick={getCurrentLocation} 
+              disabled={isSearching}
+              className={styles.locationButton}
+              title="Use your current location"
+            >
+              📍
+            </button>
+            {retryCount > 0 && (
+              <div className={styles.retryBadge}>{retryCount}</div>
+            )}
+          </div>
         </form>
         
         {/* Search Results Dropdown */}
         {showDropdown && searchResults.length > 0 && (
-          <div style={styles.dropdown}>
+          <div className={styles.dropdown}>
             {searchResults.map((result, index) => (
               <div 
                 key={`${result.place_id || index}`}
-                style={styles.dropdownItem}
+                className={styles.dropdownItem}
                 onClick={() => handleResultSelect(result)}
               >
                 {result.display_name}
@@ -422,22 +579,81 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
       </div>
       
       {/* Error Message */}
-      {errorMessage && <div style={styles.error}>{errorMessage}</div>}
+      {errorMessage && (
+        <div className={`${styles.error} ${isNetworkError ? styles.networkError : ''}`}>
+          {errorMessage}
+        </div>
+      )}
+      
+      {/* Location Tip */}
+      {showLocationTip && (
+        <div className={styles.locationTip}>
+          <span className={styles.tipIcon}>💡</span>
+          {retryCount > 0 ? (
+            <span>
+              Location may not be accurate. Try clicking the location button 
+              <button 
+                className={styles.inlineTipButton} 
+                onClick={getCurrentLocation} 
+                disabled={isSearching}
+              >
+                📍
+              </button> 
+              again for better accuracy, or use the search bar if you know your location.
+            </span>
+          ) : (
+            <span>
+              If the selected location isn't accurate, try clicking the location button again or search for your location manually.
+            </span>
+          )}
+          <button 
+            className={styles.closeTipButton}
+            onClick={() => setShowLocationTip(false)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
       
       {/* Loading Indicator */}
       {isSearching && (
-        <div style={styles.loadingIndicator}>
+        <div className={styles.loadingIndicator}>
           Loading location data...
         </div>
       )}
       
+      {/* Network Error Recovery */}
+      {isNetworkError && !isSearching && (
+        <div className={styles.networkRetryContainer}>
+          <button 
+            className={styles.networkRetryButton}
+            onClick={() => {
+              if (checkNetworkConnectivity()) {
+                if (position && position.length === 2) {
+                  updateLocationFromCoordinates(position[0], position[1]);
+                } else if (searchQuery.trim()) {
+                  handleSearchSubmit({ preventDefault: () => {} });
+                }
+              } else {
+                setErrorMessage("Still offline. Please check your internet connection and try again.");
+              }
+            }}
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+      
       {/* Map */}
-      <div style={styles.mapContainer}>
+      <div className={styles.mapContainer}>
         <MapContainer
           center={mapCenter}
-          zoom={13}
-          style={{ height: "100%", width: "100%" }}
+          zoom={mapZoom}
+          className={styles.map}
           ref={mapRef}
+          whenCreated={(map) => {
+            mapRef.current = map;
+          }}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -447,13 +663,13 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
             <Popup>{address || "Selected location"}</Popup>
           </Marker>
           <MapClickHandler onMapClick={handleMapClick} />
-          <MapCenterUpdater center={mapCenter} />
+          <MapCenterUpdater center={mapCenter} zoom={mapZoom} />
         </MapContainer>
       </div>
       
       {/* Selected Location Display */}
       {address && (
-        <div style={styles.addressDisplay}>
+        <div className={styles.addressDisplay}>
           <strong>Selected Location:</strong> {address}
         </div>
       )}
